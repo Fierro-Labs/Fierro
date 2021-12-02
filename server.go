@@ -2,12 +2,18 @@ package main
 
 // nodemon --exec go run server.go --signal SIGTERM
 
+// curl -s --request   GET
+//         --header    "Content-Type: application/json"
+//         --write-out "\n%{http_code}\n"
+//         http://localhost:13802/getKey
+
 import (
 	"fmt"
 	"log"
 	"net/http"
     "time"
-    "encoding/json"
+	"io"
+    // "encoding/json"
 
     "github.com/gorilla/mux"
     pb "github.com/ipfs/go-ipns/pb"
@@ -33,14 +39,14 @@ import (
 // CreateEntryWithEmbed shows how you can create an IPNS entry
 // and embed it with a public key. For ed25519 keys this is not needed
 // so attempting to embed with an ed25519 key, will not actually embed the key
-func CreateEntryWithEmbed(ipfsPath string, publicKey crypto.PubKey, privateKey crypto.PrivKey) (*pb.IpnsEntry, error) {
+func CreateEntryWithEmbed(ipfsPath string, privateKey crypto.PrivKey) (*pb.IpnsEntry, error) {
 	ipfsPathByte := []byte(ipfsPath)
 	eol := time.Now().Add(time.Hour * 48)
 	entry, err := ipns.Create(privateKey, ipfsPathByte, 1, eol, 0)
 	if err != nil {
 		return nil, err
 	}
-	err = ipns.EmbedPublicKey(publicKey, entry)
+	err = ipns.EmbedPublicKey(privateKey.GenerateKeyPair, entry)
 	if err != nil {
 		return nil, err
 	}
@@ -54,10 +60,18 @@ func CreateEntryWithEmbed(ipfsPath string, publicKey crypto.PubKey, privateKey c
 // ipfsPath string, privkey crypto.PrivKey
 func postKey(w http.ResponseWriter, r *http.Request) {
     // parse data here
+	var ipfsPath string
+	var privkey crypto.PrivKey
 
 
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	bodyString := string(bodyBytes)
+	fmt.Printf(bodyString)
 
-    ipnsRecord, err := CreateEntryWithEmbed(ipfsPath, privkey.GetPublic(), privkey)
+    ipnsRecord, err := CreateEntryWithEmbed(ipfsPath, privkey)
     if err != nil {
 	    panic(err)
     }
@@ -73,19 +87,18 @@ func getKey(w http.ResponseWriter, r *http.Request) {
         panic(err)
     }
 
-    // might have to use Fprintf to write to w, to return as api
 	fmt.Printf("Welcome to the IPNSKeyServer!\n")
 	fmt.Printf("Provate key: %d %d", privateKey, publicKey)
 }
 
 func main() {
-	myRouter := mux.NewRouter().StrictSlash(true)
-    mux.HandleFunc("/", index.html) // New code
-	mux.HandleFunc("/postKey", postKey)
-	mux.HandleFunc("/getKey", getKey)
+	router := mux.NewRouter().StrictSlash(true)
+    router.Handle("/", index)
+	router.HandleFunc("/getKey", getKey).Methods("GET")
+	router.HandleFunc("/postKey", postKey).Methods("POST")
 
 	fmt.Printf("Starting server at port 8082\n")
-	log.Fatal(http.ListenAndServe(":8082", myRouter))
+	log.Fatal(http.ListenAndServe(":8082", router))
         
 }
 
