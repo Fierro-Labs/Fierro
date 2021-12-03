@@ -21,6 +21,11 @@ import (
     crypto "github.com/libp2p/go-libp2p-core/crypto"
 )
 
+func index(w http.ResponseWriter, r *http.Request){
+    fmt.Fprintf(w, "Welcome to the HomePage!")
+    fmt.Println("Endpoint Hit: homePage")
+}
+
 // func PublishToIPNS(ipfsPath string, privateKey string) (string, error) {
 //     shell := NewShell("localhost:5001")
 
@@ -46,12 +51,12 @@ func CreateEntryWithEmbed(ipfsPath string, privateKey crypto.PrivKey) (*pb.IpnsE
 	if err != nil {
 		return nil, err
 	}
-	err = ipns.EmbedPublicKey(privateKey.GenerateKeyPair, entry)
+	err = ipns.EmbedPublicKey(privateKey.GetPublic(), entry)
 	if err != nil {
 		return nil, err
 	}
 
-    err = PublishToIPNS(ipfsPath, privateKey)
+    // err = PublishToIPNS(ipfsPath, privateKey)
 	return entry, nil
 }
 
@@ -76,11 +81,12 @@ func postKey(w http.ResponseWriter, r *http.Request) {
 	    panic(err)
     }
 
-    fmt.Printf("POST request successful\n")
+    fmt.Printf("POST request successful %s\n", ipnsRecord)
     fmt.Printf("entry = %s\n")
 }
 
 // Generate private and public key to return to user, will need to use to post to IPFS.
+// Function is correct for phase 1
 func getKey(w http.ResponseWriter, r *http.Request) {
     privateKey, publicKey, err := crypto.GenerateKeyPair(crypto.RSA, 2048)
     if err != nil {
@@ -88,17 +94,16 @@ func getKey(w http.ResponseWriter, r *http.Request) {
     }
 
 	fmt.Printf("Welcome to the IPNSKeyServer!\n")
-	fmt.Printf("Provate key: %d %d", privateKey, publicKey)
+	fmt.Printf("Private key: %d \nPublic Key: %d", privateKey, publicKey) //privateKey.GetPublic() returns the public key as well.
 }
 
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
-    router.Handle("/", index)
+    router.HandleFunc("/", index)
 	router.HandleFunc("/getKey", getKey).Methods("GET")
 	router.HandleFunc("/postKey", postKey).Methods("POST")
 
 	fmt.Printf("Starting server at port 8082\n")
 	log.Fatal(http.ListenAndServe(":8082", router))
-        
 }
 
