@@ -63,41 +63,52 @@ func CreateEntryWithEmbed(ipfsPath string, privateKey crypto.PrivKey) (*pb.IpnsE
 
 // Create IPNS entry & embed Public key into entry, & upload to IPFS return entry to enter in contract. 
 // ipfsPath string, privkey crypto.PrivKey
+// TODO: verify parsing works correctly
+// TODO: Verify ipnsRecord gets created properly 
 func postKey(w http.ResponseWriter, r *http.Request) {
-    // parse data here
+    // ******** parse data here *********
 	var ipfsPath string
 	var privkey crypto.PrivKey
 
-
 	bodyBytes, err := io.ReadAll(r.Body)
+	// verify there was no error
 	if err != nil {
 		log.Fatal(err)
 	}
 	bodyString := string(bodyBytes)
-	fmt.Printf(bodyString)
+	fmt.Printf("body string %s\n", bodyString)
+	// ************************************
 
+	
+	// This line creates an IPNS record & embeds users' public key
     ipnsRecord, err := CreateEntryWithEmbed(ipfsPath, privkey)
-    if err != nil {
+    // Verify there was no error
+	if err != nil {
 	    panic(err)
     }
 
+	// print to console.
     fmt.Printf("POST request successful %s\n", ipnsRecord)
     fmt.Printf("entry = %s\n")
 }
 
 // Generate private and public key to return to user, will need to use to post to IPFS.
 // Function is correct for phase 1
+// TODO: properly display contents of private and public keys
 func getKey(w http.ResponseWriter, r *http.Request) {
     privateKey, publicKey, err := crypto.GenerateKeyPair(crypto.RSA, 2048)
-    if err != nil {
+    // verify there was no error
+	if err != nil {
         panic(err)
     }
 
+	// print to console. 
 	fmt.Printf("Welcome to the IPNSKeyServer!\n")
 	fmt.Printf("Private key: %d \nPublic Key: %d", privateKey, publicKey) //privateKey.GetPublic() returns the public key as well.
 }
 
 func main() {
+	// handles api/website routes.
 	router := mux.NewRouter().StrictSlash(true)
     router.HandleFunc("/", index)
 	router.HandleFunc("/getKey", getKey).Methods("GET")
@@ -106,4 +117,3 @@ func main() {
 	fmt.Printf("Starting server at port 8082\n")
 	log.Fatal(http.ListenAndServe(":8082", router))
 }
-
