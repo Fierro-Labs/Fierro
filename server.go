@@ -16,28 +16,35 @@ import (
     // "encoding/json"
 
     "github.com/gorilla/mux"
+	shell "github.com/ipfs/go-ipfs-api"
     pb "github.com/ipfs/go-ipns/pb"
     ipns "github.com/ipfs/go-ipns"
     crypto "github.com/libp2p/go-libp2p-core/crypto"
 )
+
+const hash = "Qmbyuv31VFiD9gpq6FaugFiwdcnDVsuyfxrXuu65kxEzMy"
+const ipfsPath = "/ipfs/Qmbyuv31VFiD9gpq6FaugFiwdcnDVsuyfxrXuu65kxEzMy"
+
 
 func index(w http.ResponseWriter, r *http.Request){
     fmt.Fprintf(w, "Welcome to the HomePage!")
     fmt.Println("Endpoint Hit: homePage")
 }
 
-// func PublishToIPNS(ipfsPath string, privateKey string) (string, error) {
-//     shell := NewShell("localhost:5001")
+// This function is needed to let the world know your Record exists.
+func PublishToIPNS(ipfsPath string, privateKey crypto.PrivKey) {
+    shell := shell.NewShell("localhost:5001")
 
-//     resp, err := shell.PublishWithDetails(ipfsPath, privateKey, time.Second, time.Second, false)
-//     if err != nil {
-// 		return nil, err
-// 	}
+    resp, err := shell.PublishWithDetails(ipfsPath, "", time.Second, time.Second, false)
+    if err != nil {
+		log.Fatal(err)
+	}
 
-// 	if resp.Value != examplesHashForIPNS {
-// 		fmt.Sprintf("Expected to receive %s but got %s", examplesHash, resp.Value)
-// 	}
-// }
+	if resp.Value != ipfsPath {
+		fmt.Sprintf("Expected to receive %s but got %s", ipfsPath, resp.Value)
+	}
+	fmt.Println("response name: %s\nresponse value: %s", resp.Name, resp.Value)
+}
 
 
 
@@ -56,7 +63,6 @@ func CreateEntryWithEmbed(ipfsPath string, privateKey crypto.PrivKey) (*pb.IpnsE
 		return nil, err
 	}
 
-    // err = PublishToIPNS(ipfsPath, privateKey)
 	return entry, nil
 }
 
@@ -96,7 +102,7 @@ func postKey(w http.ResponseWriter, r *http.Request) {
 // Function is correct for phase 1
 // TODO: properly display contents of private and public keys
 func getKey(w http.ResponseWriter, r *http.Request) {
-    privateKey, publicKey, err := crypto.GenerateKeyPair(crypto.RSA, 2048)
+    privateKey, _, err := crypto.GenerateKeyPair(crypto.RSA, 2048)
     // verify there was no error
 	if err != nil {
         panic(err)
@@ -104,11 +110,39 @@ func getKey(w http.ResponseWriter, r *http.Request) {
 
 	// print to console. 
 	fmt.Printf("Welcome to the IPNSKeyServer!\n")
-	fmt.Printf("Private key: %d \nPublic Key: %d", privateKey, publicKey) //privateKey.GetPublic() returns the public key as well.
+	// spew.Printf("PrivateKey getKey(): %#+v", privateKey)
+	fmt.Printf("Private key: %d \n", privateKey) //privateKey.GetPublic() returns the public key as well.
+}
+
+
+// Generate keys and embed records. Meant to test how keys are needed to be passed.
+func testFunctions() {
+	fmt.Println("Creating key:pair...")
+	privKey, _, err := crypto.GenerateKeyPair(crypto.RSA, 2048)
+    // verify there was no error
+	if err != nil {
+        panic(err)
+    }
+
+	fmt.Println("Creating IPNS record...")
+	ipnsRecord, err := CreateEntryWithEmbed(ipfsPath, privKey)
+    // Verify there was no error
+	if err != nil {
+	    panic(err)
+    }
+
+	fmt.Println("Publishing to IPFS...")
+	PublishToIPNS(ipfsPath, privKey)
+
+
+	fmt.Printf("functions individually work. %s\n\n", ipnsRecord)
 }
 
 func main() {
 	// handles api/website routes.
+	// Used to test if keys need to be passed as objects or ints?
+	testFunctions()
+
 	router := mux.NewRouter().StrictSlash(true)
     router.HandleFunc("/", index)
 	router.HandleFunc("/getKey", getKey).Methods("GET")
