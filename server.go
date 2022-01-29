@@ -11,27 +11,43 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-    "time"
 	"io"
-	// "encoding/hex"
 	"os"
-    // "encoding/json"
+	"io/ioutil"
+    "time"
+	"context"
 
     // "github.com/gorilla/mux"
 	
 	shell "github.com/ipfs/go-ipfs-api"
     pb "github.com/ipfs/go-ipns/pb"
     ipns "github.com/ipfs/go-ipns"
-    crypto "github.com/libp2p/go-libp2p-core/crypto"
+    ic "github.com/libp2p/go-libp2p-core/crypto"
+	keystore "github.com/ipfs/go-ipfs-keystore"
+	peer "github.com/libp2p/go-libp2p-core/peer"
 )
 
 const filepath = "Hello"
 const ipfsPath = "/ipfs/QmSVjCYjy4jYZynyC2i5GeFgjhq1bLCK2vrkRz5ffnssqo"
 const localhost = "localhost:5001"
+var ks *keystore.FSKeystore
 
 func index(w http.ResponseWriter, r *http.Request){
     fmt.Fprintf(w, "Welcome to the HomePage!")
     fmt.Println("Endpoint Hit: homePage")
+}
+
+type KeyOutput struct {
+	Name string `json:"name"`
+	Id   string `json:"id"`
+}
+
+type KeyOutputList struct {
+	Keys []KeyOutput
+}
+
+var out struct {
+	Path string
 }
 
 // Correct! Adds file to IPFS, given path/filename,
@@ -51,47 +67,94 @@ func addToIPFS(file string) {
 	fmt.Printf("added %s\n", cid)
 }
 
-// This function is needed to let the world know your Record exists.\
+// CreateEntryWithEmbed shows how you can create an IPNS entry
+// and embed it with a public key. For ed25519 keys this is not needed
+// so attempting to embed with an ed25519 key, will not actually embed the key
+func createEntry(ipfsPath string, sk ic.PrivKey) (*pb.IpnsEntry, error) {
+	ipfsPathByte := []byte(ipfsPath)
+	eol := time.Now().Add(time.Hour * 48)
+	entry, err := ipns.Create(sk, ipfsPathByte, 1, eol, 0)
+	if err != nil {
+		return nil, err
+	}
+	return entry, nil
+}
+
+// This function is needed to let the world know your Record exists.
 // May not be correct procedure
-func PublishToIPNS(ipfsPath string, privateKey string) {
+func publishToIPNS(ipfsPath string, KeyName string) {
 	sh := shell.NewShell(localhost)
-    resp, err := sh.PublishWithDetails(ipfsPath, privateKey, time.Second, time.Second, false)
+    resp, err := sh.PublishWithDetails(ipfsPath, KeyName, time.Second, time.Second, false)
     if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	if resp.Value != ipfsPath {
-		fmt.Sprintf("Expected to receive %s but got %s", ipfsPath, resp.Value)
+		fmt.Printf("\nExpected to receive %s but got %s", ipfsPath, resp.Value)
 	}
 	fmt.Println("response value: %s\n", resp.Value)
 }
 
-// CreateEntryWithEmbed shows how you can create an IPNS entry
-// and embed it with a public key. For ed25519 keys this is not needed
-// so attempting to embed with an ed25519 key, will not actually embed the key
-func CreateEntryWithEmbed(ipfsPath string, privateKey crypto.PrivKey) (*pb.IpnsEntry, error) {
-	ipfsPathByte := []byte(ipfsPath)
-	eol := time.Now().Add(time.Hour * 48)
-	entry, err := ipns.Create(privateKey, ipfsPathByte, 1, eol, 0)
+
+// Generate keys and embed records. Meant to test how keys are needed to be passed.
+func testFunctions(ks keystore.Keystore) {
+	const KeyName = "temp"
+	var KeyGenResp KeyOutput
+	// var KeyOutResp KeyOutput
+
+	sh := shell.NewShell(localhost)
+
+	// req := sh.api.repo.Keystore.Get("self")
+	// err := req.Exec(context.Background(), &KeyGenResp)
+	fmt.Println("Creating key:pair...")
+	sk, _, err := ic.GenerateKeyPair(ic.Ed25519, 256)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-	err = ipns.EmbedPublicKey(privateKey.GetPublic(), entry)
+	fmt.Println(KeyGenResp.Name, KeyGenResp.Id)
+	pid, err := peer.IDFromPublicKey(sk.GetPublic()) //"create" peerID from the private key
+	peerID := pid.Pretty() //convert type peer.ID to string
+	fmt.Printf("PeerID from key: %s\n", peerID)
+
+	err = ks.Put(KeyName, sk)
+	hasKey, err := ks.Has(KeyName)
+	fmt.Printf("Ks has key: %t\n", hasKey)
+
+	// At this point the newly generated key should be in my local repo
+	// This should enable me to publish to ipfs using this key
+	
+	fmt.Println("Creating IPNS record...")
+	ipnsRecord, err := createEntry(ipfsPath, sk)
 	if err != nil {
-		return nil, err
+	    panic(err)
+    }
+
+	fmt.Printf("IPNS value: %s\n", ipnsRecord.Value)
+
+	publishToIPNS(string(ipnsRecord.Value), KeyName)
+
+	err = sh.Request("resolve", peerID).Exec(context.Background(), &out)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Resolve ipns key: %s\n", out.Path)
+	// rm temp key 
+	err = ks.Delete(KeyName)
+	if err != nil {
+		panic(err)
 	}
 
-	return entry, nil
+	fmt.Printf("functions individually work.\n\n")
 }
 
 // Create IPNS entry & embed Public key into entry, & upload to IPFS return entry to enter in contract. 
-// ipfsPath string, privkey crypto.PrivKey
+// ipfsPath string, sk ic.PrivKey
 // TODO: verify parsing works correctly
 // TODO: Verify ipnsRecord gets created properly 
 func postKey(w http.ResponseWriter, r *http.Request) {
     // ******** parse data here *********
-	var ipfsPath string
-	var privkey crypto.PrivKey
+	// var ipfsPath string
+	// var sk ic.PrivKey
 
 	bodyBytes, err := io.ReadAll(r.Body)
 	// verify there was no error
@@ -104,14 +167,14 @@ func postKey(w http.ResponseWriter, r *http.Request) {
 
 	
 	// This line creates an IPNS record & embeds users' public key
-    ipnsRecord, err := CreateEntryWithEmbed(ipfsPath, privkey)
+    // ipnsRecord, err := createEntry(ipfsPath, sk)
     // Verify there was no error
 	if err != nil {
 	    panic(err)
     }
 
 	// print to console.
-    fmt.Printf("POST request successful %s\n", ipnsRecord)
+    // fmt.Printf("POST request successful %s\n", ipnsRecord)
     fmt.Printf("entry = %s\n")
 }
 
@@ -119,7 +182,7 @@ func postKey(w http.ResponseWriter, r *http.Request) {
 // Function is correct for phase 1
 // TODO: properly display contents of private and public keys
 func getKey(w http.ResponseWriter, r *http.Request) {
-    privateKey, _, err := crypto.GenerateKeyPair(crypto.RSA, 2048)
+    sk, _, err := ic.GenerateKeyPair(ic.RSA, 2048)
     // verify there was no error
 	if err != nil {
         panic(err)
@@ -127,41 +190,23 @@ func getKey(w http.ResponseWriter, r *http.Request) {
 
 	// print to console. 
 	fmt.Printf("Welcome to the IPNSKeyServer!\n")
-	// spew.Printf("PrivateKey getKey(): %#+v", privateKey)
-	fmt.Printf("Private key: %d \n", privateKey) //privateKey.GetPublic() returns the public key as well.
-}
-
-
-// Generate keys and embed records. Meant to test how keys are needed to be passed.
-func testFunctions() {
-	fmt.Println("Creating key:pair...")
-	privKey, _, err := crypto.GenerateKeyPair(crypto.RSA, 2048)
-	// rawKey, err := privKey.Raw()
-	// hexkey := hex.EncodeToString(rawKey)
-	// fmt.Printf("hex pub key: %s\n", hexkey)
-    // verify there was no error
-	if err != nil {
-        panic(err)
-    }
-
-	fmt.Println("Creating IPNS record...", privKey)
-	ipnsRecord, err := CreateEntryWithEmbed(ipfsPath, privKey)
-    // // Verify there was no error
-	// if err != nil {
-	//     panic(err)
-    // }
-
-	fmt.Sprint(ipnsRecord)
-	// PublishToIPNS(ipfsPath, hexkey)
-
-	fmt.Printf("functions individually work.\n\n")
+	// spew.Printf("PrivateKey getKey(): %#+v", sk)
+	fmt.Printf("Private key: %d \n", sk) //sk.GetPublic() returns the public key as well.
 }
 
 func main() {
+	tdir, err := ioutil.TempDir("", "keystore-test")
+	if err != nil {
+		log.Fatal(err)
+	}
+	ks, err := keystore.NewFSKeystore(tdir)
+	if err != nil {
+		log.Fatal(err)
+	}
 	// handles api/website routes.
-	// Used to test if keys need to be passed as objects or ints?
 	addToIPFS(filepath)
-	testFunctions()
+	// Used to test if keys need to be passed as objects or ints?
+	testFunctions(ks)
 
 	// router := mux.NewRouter().StrictSlash(true)
     // router.HandleFunc("/", index)
