@@ -2,90 +2,158 @@ package main
 
 // nodemon --exec go run server.go --signal SIGTERM
 
+// curl -s --request   GET
+//         --header    "Content-Type: application/json"
+//         --write-out "\n%{http_code}\n"
+//         http://localhost:13802/getKey
+
 import (
 	"fmt"
 	"log"
 	"net/http"
+	"io"
+	"os"
     "time"
-    "encoding/json"
+	"context"
+	// "io/ioutil"
 
-    "github.com/gorilla/mux"
+    // "github.com/gorilla/mux"
+	
+	shell "github.com/ipfs/go-ipfs-api"
     pb "github.com/ipfs/go-ipns/pb"
     ipns "github.com/ipfs/go-ipns"
-    crypto "github.com/libp2p/go-libp2p-core/crypto"
+    ic "github.com/libp2p/go-libp2p-core/crypto"
+	keystore "github.com/ipfs/go-ipfs-keystore"
+	// peer "github.com/libp2p/go-libp2p-core/peer"
+	// ke "github.com/ipfs/go-ipfs/core/commands/keyencode"
+	// fsrepo "github.com/ipfs/go-ipfs/repo/fsrepo"
 )
 
-// func PublishToIPNS(ipfsPath string, privateKey string) (string, error) {
-//     shell := NewShell("localhost:5001")
+const file = "Hello"
+const localhost = "localhost:5001"
 
-//     resp, err := shell.PublishWithDetails(ipfsPath, privateKey, time.Second, time.Second, false)
-//     if err != nil {
-// 		return nil, err
-// 	}
+var ipfsURI = "/ipfs/"
+var ks *keystore.FSKeystore
 
-// 	if resp.Value != examplesHashForIPNS {
-// 		fmt.Sprintf("Expected to receive %s but got %s", examplesHash, resp.Value)
-// 	}
-// }
+func index(w http.ResponseWriter, r *http.Request){
+    fmt.Fprintf(w, "Welcome to the HomePage!")
+    fmt.Println("Endpoint Hit: homePage")
+}
+
+type PublishResponse struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
 
 
+// Adds file to IPFS, given path/filename,
+// returns CID
+// Correct
+func addToIPFS(file string) (string, error) {
+	sh := shell.NewShell(localhost)
+	fileReader, err := os.Open(file)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %s ", err)
+		os.Exit(1)
+	}
+	cid, err:= sh.Add(fileReader)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %s ", err)
+		os.Exit(1)
+	}
+	fmt.Printf("added %s\n", ipfsURI + cid)
+	ipfsPath := ipfsURI + cid
+	return ipfsPath, err
+}
 
-// CreateEntryWithEmbed shows how you can create an IPNS entry
-// and embed it with a public key. For ed25519 keys this is not needed
-// so attempting to embed with an ed25519 key, will not actually embed the key
-func CreateEntryWithEmbed(ipfsPath string, publicKey crypto.PubKey, privateKey crypto.PrivKey) (*pb.IpnsEntry, error) {
+// Create an IPNS entry with a 2 day lifespan before needing to revive
+// Correct
+func createEntry(ipfsPath string, sk ic.PrivKey) (*pb.IpnsEntry, error) {
 	ipfsPathByte := []byte(ipfsPath)
 	eol := time.Now().Add(time.Hour * 48)
-	entry, err := ipns.Create(privateKey, ipfsPathByte, 1, eol, 0)
+	entry, err := ipns.Create(sk, ipfsPathByte, 1, eol, 0)
 	if err != nil {
 		return nil, err
 	}
-	err = ipns.EmbedPublicKey(publicKey, entry)
-	if err != nil {
-		return nil, err
-	}
-
-    err = PublishToIPNS(ipfsPath, privateKey)
 	return entry, nil
 }
 
-
-// Create IPNS entry & embed Public key into entry, & upload to IPFS return entry to enter in contract. 
-// ipfsPath string, privkey crypto.PrivKey
-func postKey(w http.ResponseWriter, r *http.Request) {
-    // parse data here
-
-
-
-    ipnsRecord, err := CreateEntryWithEmbed(ipfsPath, privkey.GetPublic(), privkey)
-    if err != nil {
-	    panic(err)
-    }
-
-    fmt.Printf("POST request successful\n")
-    fmt.Printf("entry = %s\n")
+// Delete key from local node keystore
+// Correct
+func deleteKey(keyName string) error {
+	sh := shell.NewShell(localhost)
+	_, err := sh.KeyRm(context.Background(), keyName)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-// Generate private and public key to return to user, will need to use to post to IPFS.
-func getKey(w http.ResponseWriter, r *http.Request) {
-    privateKey, publicKey, err := crypto.GenerateKeyPair(crypto.RSA, 2048)
-    if err != nil {
-        panic(err)
-    }
+// Custom publishing function returns the response object and error
+// Correct?
+func Publish(contentHash string, key string) (*PublishResponse, error) {
+	var pubResp PublishResponse
+	sh := shell.NewShell(localhost)
+	req := sh.Request("name/publish", contentHash).Option("key", key)
+	req.Option("resolve", true)
+	err := req.Exec(context.Background(), &pubResp)
+	if err != nil {
+		panic(err)
+		return nil, err
+	}
 
-    // might have to use Fprintf to write to w, to return as api
-	fmt.Printf("Welcome to the IPNSKeyServer!\n")
-	fmt.Printf("Provate key: %d %d", privateKey, publicKey)
+	return &pubResp, nil
 }
+
+// This function is needed to let the world know your Record exists.
+// Correct?
+func publishToIPNS(ipfsPath string, KeyName string) {
+    pubResp, err := Publish(ipfsPath, KeyName)
+    if err != nil {
+		panic(err)
+	}
+
+	if pubResp.Value != ipfsPath {
+		fmt.Printf("\nExpected to receive %s but got %s", ipfsPath, pubResp.Value)
+	}
+
+	fmt.Printf("\nresponse Name: %s\nresponse Value: %s\n", pubResp.Name, pubResp.Value)
+}
+
+// Generate keys and embed records. Meant to test how keys are needed to be passed.
+func testFunctions(ipfsPath string) {
+	const KeyName = "temp"
+	sh := shell.NewShell(localhost)
+
+	key, err := sh.KeyGen(context.Background(), KeyName) //generate temp key to local node
+	if err != nil {
+		panic(err)
+	}
+
+	publishToIPNS(ipfsPath, key.Name) // publish ipfsPath to ipfs under temp key
+ 
+	err = deleteKey(key.Name) // delete temp key
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("functions individually work.\n\n")
+}
+
 
 func main() {
-	myRouter := mux.NewRouter().StrictSlash(true)
-    mux.HandleFunc("/", index.html) // New code
-	mux.HandleFunc("/postKey", postKey)
-	mux.HandleFunc("/getKey", getKey)
+	ipfsPath, err := addToIPFS(file)
+	if err != nil{
+		log.Panic(err)
+	}
+	// Used to test if keys need to be passed as objects or ints?
+	testFunctions(ipfsPath)
 
-	fmt.Printf("Starting server at port 8082\n")
-	log.Fatal(http.ListenAndServe(":8082", myRouter))
-        
+	// handles api/website routes.
+	// router := mux.NewRouter().StrictSlash(true)
+    // router.HandleFunc("/", index)
+	// router.HandleFunc("/getKey", getKey).Methods("GET")
+	// router.HandleFunc("/postKey", postKey).Methods("POST")
+
+	// fmt.Printf("Starting server at port 8082\n")
+	// log.Fatal(http.ListenAndServe(":8082", router))
 }
-
