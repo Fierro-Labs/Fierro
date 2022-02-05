@@ -105,3 +105,16 @@ func makeEntry(sk ic.PrivKey, ipfsPath) (*pb.IpnsEntry, nil) {
 	fmt.Printf("IPNS value: %s\n", ipnsRecord.Value)
 	return ipnsRecord, err
 }
+
+// This function takes a key name and searches for it in local node Keystore.
+// returns nil if sucessfull & stores key as file in current dir.
+func exportKey(keyName string) error {
+	sh := shell.NewShell(localhost)
+	var err error
+	rb := sh.Request("key/export", keyName) //export temp key to ds
+	err = rb.Exec(context.Background(), err)
+	if err != nil {
+		return err
+	}
+	return nil
+}
