@@ -11,10 +11,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"io"
 	"os"
     "time"
 	"context"
+	// "io"
 	// "io/ioutil"
 
     // "github.com/gorilla/mux"
@@ -44,6 +44,7 @@ type PublishResponse struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
 }
+
 
 
 // Adds file to IPFS, given path/filename,
@@ -120,6 +121,20 @@ func publishToIPNS(ipfsPath string, KeyName string) {
 	fmt.Printf("\nresponse Name: %s\nresponse Value: %s\n", pubResp.Name, pubResp.Value)
 }
 
+// This function takes a key name and searches for it in local node Keystore.
+// returns nil if sucessfull & stores key as file in current dir.
+// Will make hacky to get around problem
+func exportKey(keyName string) error {
+	sh := shell.NewShell(localhost)
+	var err error
+	rb := sh.Request("key/export", keyName) //export temp key to ds
+	err = rb.Exec(context.Background(), err)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // Generate keys and embed records. Meant to test how keys are needed to be passed.
 func testFunctions(ipfsPath string) {
 	const KeyName = "temp"
@@ -130,8 +145,14 @@ func testFunctions(ipfsPath string) {
 		panic(err)
 	}
 
-	publishToIPNS(ipfsPath, key.Name) // publish ipfsPath to ipfs under temp key
- 
+	// publishToIPNS(ipfsPath, key.Name) // publish ipfsPath to ipfs under temp key
+	fmt.Println("Exporting key...")
+	err = exportKey(KeyName)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Deleting key...")
 	err = deleteKey(key.Name) // delete temp key
 	if err != nil {
 		panic(err)
@@ -147,6 +168,7 @@ func main() {
 	}
 	// Used to test if keys need to be passed as objects or ints?
 	testFunctions(ipfsPath)
+
 
 	// handles api/website routes.
 	// router := mux.NewRouter().StrictSlash(true)
