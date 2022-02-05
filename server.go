@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
     "time"
 	"context"
 	// "io"
@@ -123,15 +124,29 @@ func publishToIPNS(ipfsPath string, KeyName string) {
 
 // This function takes a key name and searches for it in local node Keystore.
 // returns nil if sucessfull & stores key as file in current dir.
-// Will make hacky to get around problem
 func exportKey(keyName string) error {
-	sh := shell.NewShell(localhost)
-	var err error
-	rb := sh.Request("key/export", keyName) //export temp key to ds
-	err = rb.Exec(context.Background(), err)
+	args := []string{"key", "export", keyName}
+	cmd := exec.Command("ipfs", args...)
+	stdout, err := cmd.Output()
 	if err != nil {
+		fmt.Println(err.Error())
 		return err
 	}
+	fmt.Println(string(stdout))
+	return nil
+}
+
+// This function takes a key name and file name, searches for it in current dir.
+// returns nil if sucessfull & stores key in local node.
+func importKey(keyName string, fileName string) error{
+	args := []string{"key", "import", keyName, fileName}
+	cmd := exec.Command("ipfs", args...)
+	stdout, err := cmd.Output()
+	if err != nil {
+		fmt.Println(err.Error())
+		return err
+	}
+	fmt.Println(string(stdout))
 	return nil
 }
 
@@ -154,6 +169,11 @@ func testFunctions(ipfsPath string) {
 
 	fmt.Println("Deleting key...")
 	err = deleteKey(key.Name) // delete temp key
+	if err != nil {
+		panic(err)
+	}
+
+	err = importKey(key.Name, key.Name + ".key")
 	if err != nil {
 		panic(err)
 	}
