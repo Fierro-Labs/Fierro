@@ -1,7 +1,5 @@
 # IPNSGoServer
 
-## This repo is currently still under development and does not work as intended.
-
 # About 
 
 This project is meant to bring dynamic, decentralized data to any project. It started in the Web3 Jam 2021 hackathon, out of the founders need for customizeable decentralized content. While searching for resources, there were more creators asking the same question. "What is the best way to have elements in a NFT's metadata change based on certain events using IPFS?". This api is meant for devs looking to create dapps or services that give their users customizeable content in a web3 way. 

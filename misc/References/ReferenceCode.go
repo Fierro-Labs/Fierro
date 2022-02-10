@@ -1,5 +1,7 @@
 import (
 	"io/ioutil"
+	"net/http"
+	"encoding/json"
 
 	ic "github.com/libp2p/go-libp2p-core/crypto"
 	keystore "github.com/ipfs/go-ipfs-keystore"
@@ -117,4 +119,24 @@ func exportKey(keyName string) error {
 		return err
 	}
 	return nil
+}
+
+func badRequest(wrt http.ResponseWriter, req *http.Request) {
+	keys, ok := req.URL.Query()["keyName"]
+
+	// Query()["keyName"] will return an array of items,
+	// we only want the single item.
+	keyName := keys[0]
+	if !ok || len(keys[0]) < 1 {
+        log.Println("Url Param 'keyName' is missing")
+		wrt.WriteHeader(http.StatusBadRequest)
+		wrt.Header().Set("Content-Type", "application/octet-stream")
+		resp := make(map[string]string)
+		resp["message"] = "Status Bad Request"
+		jsonResp, err:= json.Marshal(resp)
+		if err != nil {
+			log.Fatalf("Error in JSON marshal. Err: %s", err)
+		}
+		wrt.Write(jsonResp)
+    } 
 }
