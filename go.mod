@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/gopherjs/gopherjs v0.0.0-20190812055157-5d271430af9f // indirect
+	github.com/gorilla/handlers v1.5.1 // indirect
 	github.com/ipfs/go-ds-flatfs v0.5.1
 	github.com/ipfs/go-ipfs v0.11.0
 	github.com/ipfs/go-ipfs-api v0.3.0
