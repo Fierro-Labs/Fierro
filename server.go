@@ -238,15 +238,8 @@ func GetKey(w http.ResponseWriter, req *http.Request) {
 	fmt.Println("Generating key...")
 	key, err := genKey(keyName)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Header().Set("Content-Type", "application/octet-stream")
-		resp := make(map[string]string)
-		resp["message"] = "Status Bad Request"
-		jsonResp, err:= json.Marshal(resp)
-		if err != nil {
-			log.Fatalf("Error in JSON marshal. Err: %s", err)
-		}
-		w.Write(jsonResp)
+		panic(err)
+		return
 	}
 
 	fmt.Println("Exporting key...")
