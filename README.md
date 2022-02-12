@@ -51,6 +51,6 @@ Then you need to build the project:
 
 From there you can run the server by:
 
-`go run server.go`
+`go run .`
 
 Now you can request keys and publish to IPNS!
