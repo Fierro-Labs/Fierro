@@ -13,6 +13,7 @@ type IpnsEntry struct {
 	Name  string
 	Value string
 }
+var ks *keystore.FSKeystore
 
 // Put a key in custom keystore
 // Will run into problems when publishing, because the publish function won't know where to find keys.

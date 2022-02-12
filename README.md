@@ -41,14 +41,16 @@ putKey(IPFSHash, publicKey, privateKey) - This will update your record if it exi
 # To Run
 Make sure you have [golang](https://go.dev/doc/install) installed and [go-ipfs](https://github.com/ipfs/go-ipfs). You can find instructions on their respective websites.
 
-After that is done, to execute type:
+After that is done, remember to fork, clone, &:
+
+`cd IPNSGoServer`
+
+Then you need to build the project:
 
 `go build`
 
-This is similar to npm install. It will download all the packages needed, specified in go.mod
+From there you can run the server by:
 
-From there you can type:
-
-`go run server.go`
+`go run .`
 
 Now you can request keys and publish to IPNS!
