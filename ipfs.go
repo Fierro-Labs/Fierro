@@ -55,7 +55,7 @@ func addToIPFS(file string) (string, error) {
 }
 
 // Custom publishing function returns the response object and error
-// Kept as close as possible to Publish method found at gh.com/ipfs/go-ipns
+// Kept as close as possible to Publish method found at gh.com/go-ipfs-api
 // Correct
 func Publish(contentHash string, key string) (*PublishResponse, error) {
 	var pubResp PublishResponse

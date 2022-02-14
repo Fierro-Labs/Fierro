@@ -30,8 +30,9 @@ getKey() - This will generate and return a private/public key pair in .key forma
 
 postKey(<IPFS_CID>, <key_name>.key) - This will publish content to IPFS and return IPNS address.
 
-### To Do
 add(file) - This will add content to IPFS. Will return CID.
+
+### To Do
 
 add(dir) - This will add directory to IPFS. Will return CID.
 
@@ -41,11 +42,20 @@ putKey(IPFSHash, publicKey, privateKey) - This will update your record if it exi
 # To Run
 Make sure you have [golang](https://go.dev/doc/install) installed and [go-ipfs](https://github.com/ipfs/go-ipfs). You can find instructions on their respective websites.
 
-After that is done, remember to fork, clone, &:
+After that is done, remember to fork, clone, & init ipfs:
+
+`ipfs init` 
+
+Then spin up local ipfs node:
+
+`ipfs daemon`
+*this command will hold up your terminal*
+
+Then in a separate terminal window change directory into the repo:
 
 `cd IPNSGoServer`
 
-Then you need to build the project:
+Then build the project:
 
 `go build`
 
