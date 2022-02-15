@@ -24,7 +24,7 @@ As previously mentioned, IPNS records need to be republished after a certain per
 
 # API 
 
-There are two endpoints currently:
+There are three endpoints currently:
 
 getKey() - This will generate and return a private/public key pair in .key format. These keys are used to create and update IPNS records.
 

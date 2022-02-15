@@ -97,6 +97,7 @@ func createEntry(ipfsPath string, sk ic.PrivKey) (*pb.IpnsEntry, error) {
 	return entry, nil
 }
 
+
 // Just an Example function to show how to call createEntry()
 func makeEntry(sk ic.PrivKey, ipfsPath) (*pb.IpnsEntry, nil) {
 	fmt.Println("Creating IPNS record...")
