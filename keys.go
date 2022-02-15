@@ -3,33 +3,45 @@ package main
 import (
 	"fmt"
 	"context"
+	"os"
 	"os/exec"
 
 	shell "github.com/ipfs/go-ipfs-api"
 
 )
 
+// This function generates a key using local node and returns it
+func genKey(keyName string) (*shell.Key, error) {
+	sh := shell.NewShell(localhost) //grab local node
+
+	key, err := sh.KeyGen(context.Background(), keyName) //generate temp key to local node
+	if err != nil {
+		fmt.Println("Error in node keyGen: ", err)
+		return nil, err
+	}
+	return key, err	
+}
+
 // Delete key from local node keystore
-// Correct
 func deleteKey(keyName string) error {
 	sh := shell.NewShell(localhost)
 	_, err := sh.KeyRm(context.Background(), keyName)
 	if err != nil {
+		fmt.Println("Error in node key delete: ", err)
 		return err
 	}
 	return nil
 }
 
-// This function deletes the exported key from  dir
+// This function deletes the exported key from disk
 func diskDelete(keyName string) error {
 	args := []string{keyName+".key"}
 	cmd := exec.Command("rm", args...)
-	stdout, err := cmd.Output()
+	_, err := cmd.Output()
 	if err != nil {
-		fmt.Println("Error in disk delete: ", err.Error())
+		fmt.Fprintf(os.Stderr, "Error in diskDelete: %s ", err)
 		return err
 	}
-	fmt.Println(string(stdout))
 	return nil
 }
 
@@ -40,7 +52,7 @@ func exportKey(keyName string) error {
 	cmd := exec.Command("ipfs", args...)
 	stdout, err := cmd.Output()
 	if err != nil {
-		fmt.Println("Error in export: ", err.Error())
+		fmt.Fprintf(os.Stderr, "Error in exportKey: %s ", err)
 		return err
 	}
 	fmt.Println(string(stdout))
@@ -54,19 +66,9 @@ func importKey(keyName string, fileName string) error {
 	cmd := exec.Command("ipfs", args...)
 	stdout, err := cmd.Output()
 	if err != nil {
-		fmt.Println("Error in import exec: ", err)
+		fmt.Println(os.Stderr, "Error in importKey: %s", err)
 		return err
 	}
 	fmt.Println(string(stdout))
 	return nil
-}
-
-// This function generates a key using local node and returns it
-// correct
-func genKey(keyName string) (*shell.Key, error) {
-	sh := shell.NewShell(localhost) //grab local node
-
-	key, err := sh.KeyGen(context.Background(), keyName) //generate temp key to local node
-
-	return key, err	
 }

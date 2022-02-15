@@ -20,43 +20,27 @@ type PublishResponse struct {
 	Value string `json:"value"`
 }
 
-// Create an IPNS entry with a 2 day lifespan before needing to revive
-// Correct
-func createEntry(ipfsPath string, sk ic.PrivKey) (*pb.IpnsEntry, error) {
-	ipfsPathByte := []byte(ipfsPath)
-	eol := time.Now().Add(time.Hour * 48)
-	entry, err := ipns.Create(sk, ipfsPathByte, 1, eol, 0)
-	if err != nil {
-		return nil, err
-	}
-	return entry, nil
-}
-
 // Adds file to IPFS, given path/filename,
 // returns CID
-// Correct
 func addToIPFS(file string) (string, error) {
 	sh := shell.NewShell(localhost)
 	fileReader, err := os.Open(file)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %s ", err)
-		panic(err)
+		fmt.Fprintln(os.Stderr, "error: %s ", err)
 		return "", err
 	}
 	cid, err:= sh.Add(fileReader)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %s ", err)
-		panic(err)
+		fmt.Println("Error in adding file to ipfs: ", err)
 		return "", err
 	}
-	fmt.Printf("added %s\n", ipfsURI + cid)
 	ipfsPath := ipfsURI + cid
-	return ipfsPath, err
+	fmt.Printf("Added %s\n", ipfsPath)
+	return ipfsPath, nil
 }
 
 // Custom publishing function returns the response object and error
 // Kept as close as possible to Publish method found at gh.com/go-ipfs-api
-// Correct
 func Publish(contentHash string, key string) (*PublishResponse, error) {
 	var pubResp PublishResponse
 	sh := shell.NewShell(localhost)
@@ -64,7 +48,6 @@ func Publish(contentHash string, key string) (*PublishResponse, error) {
 	req.Option("resolve", true)
 	err := req.Exec(context.Background(), &pubResp)
 	if err != nil {
-		panic(err)
 		return nil, err
 	}
 
@@ -72,15 +55,16 @@ func Publish(contentHash string, key string) (*PublishResponse, error) {
 }
 
 // This function is needed to let the world know your Record exists.
-// Correct
 func publishToIPNS(ipfsPath string, KeyName string) (*PublishResponse, error) {
     pubResp, err := Publish(ipfsPath, KeyName)
     if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Error in Publish: %s ", err)
+		return nil, err
 	}
 
 	if pubResp.Value != ipfsPath {
 		fmt.Printf("\nExpected to receive %s but got %s", ipfsPath, pubResp.Value)
+		return nil, err
 	}
 
 	fmt.Printf("\nresponse Name: %s\nresponse Value: %s\n", pubResp.Name, pubResp.Value)
