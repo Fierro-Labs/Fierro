@@ -3,14 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
-    "time"
 	"context"
 
-
 	shell "github.com/ipfs/go-ipfs-api"
-    pb "github.com/ipfs/go-ipns/pb"
-    ipns "github.com/ipfs/go-ipns"
-    ic "github.com/libp2p/go-libp2p-core/crypto"
 )
 
 // var ipfsURI = "/ipfs/"
