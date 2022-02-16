@@ -34,8 +34,8 @@ func deleteKey(keyName string) error {
 }
 
 // This function deletes the exported key from disk
-func diskDelete(keyName string) error {
-	args := []string{keyName+".key"}
+func diskDelete(keyPath string) error {
+	args := []string{keyPath}
 	cmd := exec.Command("rm", args...)
 	_, err := cmd.Output()
 	if err != nil {

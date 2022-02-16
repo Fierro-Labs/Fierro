@@ -57,22 +57,20 @@ func testFunctions(ipfsPath string) {
 	fmt.Printf("functions individually work.\n\n")
 }
 
-// This function parses the parameters in URL to grab the CID.
-// Correct
-func GetCID(r *http.Request) (string, bool) {
-	CIDs, ok := r.URL.Query()["CID"]
-	// Query()["keyName"] will return an array of items,
+// This function grabs the specified parameter value out the URL
+func GetParam(r *http.Request, parameter string) (string, bool) {
+	params, ok := r.URL.Query()[parameter]
+	// Query()[parameter] will return an array of items,
 	// we only want the single item.
-	if !ok || len(CIDs[0]) < 1 {
-		fmt.Println("Error: Missing CID")
-		return "Missing CID parameter", !ok
+	if !ok || len(params[0]) < 1 {
+		fmt.Println("Error: Missing " + parameter)
+		return "Missing "+parameter+" parameter", !ok
 	} 
-	return CIDs[0], ok
+	return params[0], ok
 }
 
 // This function generates a key, exports it to "<keyName>.key" file in current dir, then delete from local keystore.
 // returns newly generated key file to user
-// Correct
 func GetKey(w http.ResponseWriter, r *http.Request) {
 	keyName := "temp" // user input from API or self-generated non-clashing name
 	fmt.Println("Generating key...")
@@ -105,7 +103,7 @@ func GetKey(w http.ResponseWriter, r *http.Request) {
 
 
 	fmt.Println("Deleting exported key...")
-	err = diskDelete(keyName) // delete key from disk
+	err = diskDelete(keyName+".key") // delete key from disk
 	if err != nil {
 		panic(err)
 		return
@@ -119,9 +117,8 @@ func GetKey(w http.ResponseWriter, r *http.Request) {
 	// }
 }
 
-// This function takes a CID and file.key and publishes IPNS record to IPFS
-// Returns ACK & IPNS path
-// Need to test error cases and responses.
+// This function will save a key to node, then delete the uploaded file from disk
+// Returns 200 & key name as confirmation
 func PostKey(w http.ResponseWriter, r *http.Request) {
 	const dir = "KeyStore"
 	FileName, err := saveFile(r, dir, 32 << 10) // grab uploaded .key file
@@ -131,12 +128,58 @@ func PostKey(w http.ResponseWriter, r *http.Request) {
 	}
 	name := strings.Split(FileName, ".")[0]
 
-	fmt.Println("Getting CID...")
-	CID, ok := GetCID(r) // grab CID from query parameter
-	if ok != true {
-		writeJSONError(w, CID, nil)
+	fmt.Println("Importing Key...")
+	err = importKey(name, dir+"/"+FileName) //import key to local node keystore
+	if err != nil {
+		writeJSONError(w, "Error in importKey", err)
 		return
 	}
+
+	fmt.Println("Deleting saved key from disk...")
+	err = diskDelete(dir+"/"+FileName) // delete key from disk
+	if err != nil {
+		writeJSONError(w, "Error in deleteKey", err)
+		return
+	}
+	writeJSONSuccess(w, "Success - Saved key", name)
+}
+
+// This function will delete a key from the local node keystore
+func DeleteKey(w http.ResponseWriter, r *http.Request) {
+	keyName, ok := GetParam(r, "keyName")
+	if ok != true {
+		writeJSONError(w, keyName, nil)
+		return
+	}
+
+	fmt.Println("Deleting key...")
+	err := deleteKey(keyName) // delete temp key from local node keystore
+	if err != nil {
+		writeJSONError(w, "Error in deleteKey", err)
+		return
+	}
+	writeJSONSuccess(w, "Success - Deleted key", keyName)
+}
+
+// This function takes a CID and file.key and publishes brand new IPNS records to IPFS
+// IPFS Node handles republishing automatically in the background as long as it is up and running
+// Returns ACK & IPNS path
+func PostRecord(w http.ResponseWriter, r *http.Request) {
+	const dir = "KeyStore"
+	
+	fmt.Println("Getting CID...")
+	CID, ok := GetParam(r, "CID") // grab CID from query parameter
+	if ok != true {
+		writeJSONError(w, "Error with getting CID: "+CID, nil)
+		return
+	}
+
+	FileName, err := saveFile(r, dir, 32 << 10) // grab uploaded .key file
+	if err != nil {
+		writeJSONError(w, "Error in saveFile", err)
+		return
+	}
+	name := strings.Split(FileName, ".")[0]
 
 	fmt.Println("Importing Key...")
 	err = importKey(name, dir+"/"+FileName) //import key to local node keystore
@@ -152,13 +195,61 @@ func PostKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println("Deleting exported key...")
+	err = diskDelete(dir+"/"+FileName) // delete key from disk
+	if err != nil {
+		writeJSONError(w, "Error in diskDelete", err)
+		return
+	}
+
 	fmt.Printf("\nresponse Name: %s\nresponse Value: %s\n", pubResp.Name, pubResp.Value)
 	writeJSONSuccess(w, "Success - PostKey", ipnsURI+pubResp.Name)
 }
 
+// This function takes an IPNS Key and file.key and resolves IPNS record
+// IPFS Node handles republishing automatically in the background as long as it is up and running
+// Returns ACK & resolved content
+func PutRecord(w http.ResponseWriter, r *http.Request) {
+	const dir = "KeyStore"
+	
+	fmt.Println("Getting IPNS Key...")
+	key, ok := GetParam(r, "ipnskey") // grab key from query parameter
+	if ok != true {
+		writeJSONError(w, "Error with getting key: "+key, nil)
+		return
+	}
+
+	FileName, err := saveFile(r, dir, 32 << 10) // grab uploaded .key file
+	if err != nil {
+		writeJSONError(w, "Error in saveFile", err)
+		return
+	}
+	name := strings.Split(FileName, ".")[0]
+
+	fmt.Println("Importing Key...")
+	err = importKey(name, dir+"/"+FileName) //import key to local node keystore
+	if err != nil {
+		writeJSONError(w, "Error in importKey", err)
+		return
+	}
+
+	path, err := resolve(key) // download content and return ipfs path
+	if err != nil {
+		writeJSONError(w, "Error in resolve", err)
+		return
+	}
+
+	fmt.Println("Deleting saved key from disk...")
+	err = diskDelete(dir+"/"+FileName) // delete key from disk
+	if err != nil {
+		writeJSONError(w, "Error in deleteKey", err)
+		return
+	}
+	writeJSONSuccess(w, "Success - PutRecord", path)
+}
+
 // Grab uploaded file and add to ipfs
 // returns ipfsPath (ipfsURI + CID)
-// Correct
 func AddFile(w http.ResponseWriter, r *http.Request) {
 	const dir = "Uploads"
 
@@ -247,6 +338,9 @@ func main() {
     router.HandleFunc("/", index)
 	router.HandleFunc("/getKey", GetKey).Methods("GET")
 	router.HandleFunc("/postKey", PostKey).Methods("POST")
+	router.HandleFunc("/deleteKey", DeleteKey).Methods("DELETE")
+	router.HandleFunc("/postRecord", PostRecord).Methods("POST")
+	router.HandleFunc("/putRecord", PutRecord).Methods("PUT")
 	router.HandleFunc("/addFile", AddFile).Methods("POST")
 
 	fmt.Printf("Starting server at port 8082\n")

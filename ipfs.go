@@ -6,6 +6,8 @@ import (
 	"context"
 
 	shell "github.com/ipfs/go-ipfs-api"
+	path "github.com/ipfs/interface-go-ipfs-core/path"
+	// coreiface "github.com/ipfs/interface-go-ipfs-core"
 )
 
 // var ipfsURI = "/ipfs/"
@@ -13,6 +15,15 @@ import (
 type PublishResponse struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
+}
+
+type ResolvedPath struct {
+	Path path.Path
+}
+
+type IpnsEntry struct {
+	Name  string
+	Value string
 }
 
 // Adds file to IPFS, given path/filename,
@@ -36,7 +47,7 @@ func addToIPFS(file string) (string, error) {
 
 // Custom publishing function returns the response object and error
 // Kept as close as possible to Publish method found at gh.com/go-ipfs-api
-func Publish(contentHash string, key string) (*PublishResponse, error) {
+func PublishToIPFS(contentHash string, key string) (*PublishResponse, error) {
 	var pubResp PublishResponse
 	sh := shell.NewShell(localhost)
 	req := sh.Request("name/publish", contentHash).Option("key", key)
@@ -51,7 +62,7 @@ func Publish(contentHash string, key string) (*PublishResponse, error) {
 
 // This function is needed to let the world know your Record exists.
 func publishToIPNS(ipfsPath string, KeyName string) (*PublishResponse, error) {
-    pubResp, err := Publish(ipfsPath, KeyName)
+    pubResp, err := PublishToIPFS(ipfsPath, KeyName)
     if err != nil {
 		fmt.Fprintf(os.Stderr, "Error in Publish: %s ", err)
 		return nil, err
@@ -65,4 +76,16 @@ func publishToIPNS(ipfsPath string, KeyName string) (*PublishResponse, error) {
 	fmt.Printf("\nresponse Name: %s\nresponse Value: %s\n", pubResp.Name, pubResp.Value)
 	
 	return pubResp, nil
+}
+
+// This function will resolve/download the content pointed to by the record. 
+func resolve(ipnsKey string) (string, error) {
+	var path ResolvedPath
+	sh := shell.NewShell(localhost)
+	req := sh.Request("name/resolve", ipnsKey).Option("dht-timeout", "300s") // timeout after 5 minutes
+	err := req.Exec(context.Background(), &path)
+	if err != nil {
+		return "", err
+	}
+	return "/ipns/"+ipnsKey, nil
 }
