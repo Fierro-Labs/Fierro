@@ -21,10 +21,6 @@ type ResolvedPath struct {
 	Path path.Path
 }
 
-type IpnsEntry struct {
-	Name  string
-	Value string
-}
 
 // Adds file to IPFS, given path/filename,
 // returns CID
