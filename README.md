@@ -55,9 +55,9 @@ Then in a separate terminal window change directory into the repo:
 
 `cd IPNSGoServer`
 
-Then build the project:
+Now, you need to pull in the dependencies specified in server.go.
 
-`go build`
+`go get`
 
 From there you can run the server by:
 
