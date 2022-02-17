@@ -24,19 +24,25 @@ As previously mentioned, IPNS records need to be republished after a certain per
 
 # API 
 
-There are three endpoints currently:
+There are seven endpoints currently:
 
 getKey() - This will generate and return a private/public key pair in .key format. These keys are used to create and update IPNS records.
 
-postKey(<IPFS_CID>, <key_name>.key) - This will publish content to IPFS and return IPNS address.
+postKey(<key_name>.key) - This will import the key to node.
+
+deleteKey(<key_name> string) - This will delete key from node.
+
+getRecord(<IPNS_key> string) - This will resolve what IPNS record points to and return IPFS Path. *Does not yet support continuous resolution aka IPNS Following*
+
+postRecord(<IPFS_CID> string, <key_name>.key) - This will publish a brand new IPNS record and return IPNS path. Saves key to allow for republishing.
+
+putRecord(<IPNS_key> string, <key_name>.key) - This will resolve IPNS record and returns IPFS path. Saves key to allow for republishing.
 
 add(file) - This will add content to IPFS. Will return CID.
 
 ### To Do
 
 add(dir) - This will add directory to IPFS. Will return CID.
-
-putKey(IPFSHash, publicKey, privateKey) - This will update your record if it exists.
 
 
 # To Run
