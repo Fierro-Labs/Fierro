@@ -161,6 +161,25 @@ func DeleteKey(w http.ResponseWriter, r *http.Request) {
 	writeJSONSuccess(w, "Success - Deleted key", keyName)
 }
 
+// This function will accept a ipns key and resolve it
+// returns the ipfs path it resolved.
+func GetRecord(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Getting IPNS Key...")
+	ipnsKey, ok := GetParam(r, "ipnskey") // grab ipnskey from query parameter
+	if ok != true {
+		writeJSONError(w, "Error with getting ipnskey", nil)
+		return
+	}
+
+	fmt.Println("Resolving IPNS Record...")
+	path, err := resolve(ipnsKey) // download content and return ipfs path
+	if err != nil {
+		writeJSONError(w, "Error in resolve", err)
+		return
+	}
+	writeJSONSuccess(w, "Success - GetRecord", path)
+}
+
 // This function takes a CID and file.key and publishes brand new IPNS records to IPFS
 // IPFS Node handles republishing automatically in the background as long as it is up and running
 // Returns ACK & IPNS path
@@ -233,6 +252,7 @@ func PutRecord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println("Resolving IPNS Record...")
 	path, err := resolve(key) // download content and return ipfs path
 	if err != nil {
 		writeJSONError(w, "Error in resolve", err)
@@ -341,7 +361,9 @@ func main() {
 	router.HandleFunc("/deleteKey", DeleteKey).Methods("DELETE")
 	router.HandleFunc("/postRecord", PostRecord).Methods("POST")
 	router.HandleFunc("/putRecord", PutRecord).Methods("PUT")
+	router.HandleFunc("/getRecord", GetRecord).Methods("GET")
 	router.HandleFunc("/addFile", AddFile).Methods("POST")
+
 
 	fmt.Printf("Starting server at port 8082\n")
 	log.Fatal(http.ListenAndServe(":8082", router))
