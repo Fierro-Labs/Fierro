@@ -6,8 +6,6 @@ import (
 	"context"
 
 	shell "github.com/ipfs/go-ipfs-api"
-	path "github.com/ipfs/interface-go-ipfs-core/path"
-	// coreiface "github.com/ipfs/interface-go-ipfs-core"
 )
 
 // var ipfsURI = "/ipfs/"
@@ -18,7 +16,7 @@ type PublishResponse struct {
 }
 
 type ResolvedPath struct {
-	Path path.Path
+	Path string
 }
 
 
@@ -78,10 +76,10 @@ func publishToIPNS(ipfsPath string, KeyName string) (*PublishResponse, error) {
 func resolve(ipnsKey string) (string, error) {
 	var path ResolvedPath
 	sh := shell.NewShell(localhost)
-	req := sh.Request("name/resolve", ipnsKey).Option("dht-timeout", "300s") // timeout after 5 minutes
+	req := sh.Request("name/resolve", ipnsKey).Option("dht-timeout", "180s") // timeout after 3 minutes
 	err := req.Exec(context.Background(), &path)
 	if err != nil {
 		return "", err
 	}
-	return "/ipns/"+ipnsKey, nil
+	return path.Path, nil
 }
