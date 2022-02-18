@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
+	github.com/gammazero/deque v0.1.0
 	github.com/gopherjs/gopherjs v0.0.0-20190812055157-5d271430af9f // indirect
 	github.com/gorilla/mux v1.7.3
 	github.com/ipfs/go-datastore v0.5.1 // indirect
@@ -16,6 +17,7 @@ require (
 	github.com/libp2p/go-libp2p-record v0.1.3 // indirect
 	github.com/multiformats/go-base32 v0.0.4 // indirect
 	github.com/multiformats/go-multiaddr v0.4.1 // indirect
+	github.com/robfig/cron v1.2.0 // indirect
 	github.com/smartystreets/assertions v1.0.1 // indirect
 	github.com/warpfork/go-testmark v0.9.0 // indirect
 	github.com/whyrusleeping/cbor-gen v0.0.0-20210219115102-f37d292932f2 // indirect

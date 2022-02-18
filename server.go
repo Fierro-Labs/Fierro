@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"context"
 	"encoding/json"
 	"io"
@@ -11,6 +13,8 @@ import (
 	"strings"
 
     "github.com/gorilla/mux"
+	"github.com/gammazero/deque"
+	"github.com/robfig/cron"
 	shell "github.com/ipfs/go-ipfs-api"
 )
 
@@ -20,11 +24,14 @@ const localhost = "localhost:5001"
 const ipfsURI = "/ipfs/"
 const ipnsURI = "/ipns/"
 
+var q deque.Deque
+
 
 func index(w http.ResponseWriter, r *http.Request){
     fmt.Fprintf(w, "Welcome to the HomePage!")
     fmt.Println("Endpoint Hit: HomePage")
 }
+
 
 
 // Generate keys and embed records. Meant to test how keys are needed to be passed.
@@ -172,12 +179,15 @@ func GetRecord(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println("Resolving IPNS Record...")
-	path, err := resolve(ipnsKey) // download content and return ipfs path
+	ipfsPath, err := resolve(ipnsKey) // download content and return ipfs path
 	if err != nil {
 		writeJSONError(w, "Error in resolve", err)
 		return
 	}
-	writeJSONSuccess(w, "Success - GetRecord", path)
+
+	q.PushBack(ipnsKey)
+
+	writeJSONSuccess(w, "Success - GetRecord", ipfsPath)
 }
 
 // This function takes a CID and file.key and publishes brand new IPNS records to IPFS
@@ -253,7 +263,7 @@ func PutRecord(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println("Resolving IPNS Record...")
-	path, err := resolve(key) // download content and return ipfs path
+	ipfsPath, err := resolve(key) // download content and return ipfs path
 	if err != nil {
 		writeJSONError(w, "Error in resolve", err)
 		return
@@ -265,7 +275,41 @@ func PutRecord(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, "Error in deleteKey", err)
 		return
 	}
-	writeJSONSuccess(w, "Success - PutRecord", path)
+	writeJSONSuccess(w, "Success - PutRecord", ipfsPath)
+}
+
+// This function will return the first element of the queue and add it to the back
+func FollowRecord(w http.ResponseWriter, r *http.Request) {
+	ipnsKey := follow(false)
+	if ipnsKey == "" {
+		writeJSONError(w, "Queue is empty", nil)
+		return
+	}
+	writeJSONSuccess(w, "Success - PopFront", ipnsKey)
+}
+
+// Helper function so that we can call internally and externally
+// returns the key at front of queue
+func follow(internal bool) string {
+	defer func() { // <- executes only if there is a panic when using the queue
+		if (recover() != nil){
+			fmt.Sprintf("Error with queue operations %s")
+			return
+		}
+	}()
+	ipnsKeyInt := q.PopFront()
+	ipnsKey := fmt.Sprintf("%s", ipnsKeyInt) // Used to convert interface to string
+	// fmt.Printf("Success - top key is: %s\n", ipnsKey)
+	q.PushBack(ipnsKey)
+	if internal {
+		ipfsPath, err := resolve(ipnsKey)
+		if err != nil {
+			fmt.Printf("Error in resolve %s", err)
+			return ""
+		}
+		return ipfsPath
+	}
+	return ipnsKey
 }
 
 // Grab uploaded file and add to ipfs
@@ -351,8 +395,22 @@ func writeJSONSuccess(w http.ResponseWriter, msg string, val string) {
 func main() {
 	// Used to test if keys need to be passed as objects or ints?
 	// testFunctions(ipfsPath)
+	c := cron.New()
+	c.AddFunc("@every 2m", func() {
+		ipfsPath := follow(true)
+		fmt.Printf(ipfsPath)	
+	})
+	c.Start()
+	
+	channel := make(chan os.Signal, 1)
+	signal.Notify(channel, os.Interrupt, syscall.SIGTERM)
+	go func(){
+		<-channel
+		c.Stop()
+		os.Exit(1)
+	}()
 
-
+	q.PushBack("k51qzi5uqu5dm876hw4kh2mn58rnajofhoohohymt9bui38q6ogsa0rrct6fnh")
 	// handles api/website routes.
 	router := mux.NewRouter().StrictSlash(true)
     router.HandleFunc("/", index)
@@ -362,6 +420,7 @@ func main() {
 	router.HandleFunc("/postRecord", PostRecord).Methods("POST")
 	router.HandleFunc("/putRecord", PutRecord).Methods("PUT")
 	router.HandleFunc("/getRecord", GetRecord).Methods("GET")
+	router.HandleFunc("/followRecord", FollowRecord).Methods("GET")
 	router.HandleFunc("/addFile", AddFile).Methods("POST")
 
 
