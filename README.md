@@ -26,17 +26,19 @@ As previously mentioned, IPNS records need to be republished after a certain per
 
 There are seven endpoints currently:
 
-getKey() - This will generate and return a private/public key pair in .key format. These keys are used to create and update IPNS records.
+getKey() - This will generate and return a private/public key pair in .key format. These keys are used to create, update, and republish IPNS records.
 
-postKey(<key_name>.key) - This will import the key to node.
+postKey(<key_name>.key) - This will import the private key to node.
 
-deleteKey(<key_name> string) - This will delete key from node.
+deleteKey(<key_name> string) - This will delete private key from node.
 
-getRecord(<IPNS_key> string) - This will resolve what IPNS record points to and return IPFS Path. *Does not yet support continuous resolution aka IPNS Following*
+getRecord(<IPNS_key> string) - This will resolve what IPNS record points to and return IPFS Path. *Does not support continuous resolution aka IPNS Following*
 
-postRecord(<IPFS_CID> string, <key_name>.key) - This will publish a brand new IPNS record and return IPNS path. Saves key to allow for republishing.
+postRecord(<IPFS_CID> string, <key_name>.key) - This will publish a brand new IPNS record and return IPNS path. Saves private key to allow for republishing.
 
-putRecord(<IPNS_key> string, <key_name>.key) - This will resolve IPNS record and returns IPFS path. Saves key to allow for republishing.
+putRecord(<IPNS_key> string, <key_name>.key) - This will resolve IPNS record and returns IPFS path. Saves private key to allow for republishing.
+
+followRecord(<IPNS_key> string) - This will add IPNS record to queue to allow for continuous resolution aka IPNS Following
 
 add(file) - This will add content to IPFS. Will return CID.
 
