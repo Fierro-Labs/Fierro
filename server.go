@@ -185,8 +185,6 @@ func GetRecord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	q.PushBack(ipnsKey)
-
 	writeJSONSuccess(w, "Success - GetRecord", ipfsPath)
 }
 
@@ -278,15 +276,38 @@ func PutRecord(w http.ResponseWriter, r *http.Request) {
 	writeJSONSuccess(w, "Success - PutRecord", ipfsPath)
 }
 
-// This function will return the first element of the queue and add it to the back
+// This function will take an ipns key and add it to the queue to be resolved later
 func FollowRecord(w http.ResponseWriter, r *http.Request) {
-	ipnsKey := follow(false)
-	if ipnsKey == "" {
-		writeJSONError(w, "Queue is empty", nil)
+	fmt.Println("Getting IPNS Key...")
+	ipnsKey, ok := GetParam(r, "ipnskey") // grab ipnskey from query parameter
+	if ok != true {
+		writeJSONError(w, "Error with getting ipnskey", nil)
 		return
 	}
-	writeJSONSuccess(w, "Success - PopFront", ipnsKey)
+
+	q.PushBack(ipnsKey) // add record to queue
+
+	writeJSONSuccess(w, "Success - Will continue to check back later", ipnsKey)
 }
+
+// This function will check for if a record is in queue and delete it
+// Meant for manual deletion of record 
+// func StopFollowing(w http.ResponseWriter, r *http.Request) {
+// 	fmt.Println("Getting IPNS Key...")
+// 	ipnsKey, ok := GetParam(r, "ipnskey") // grab ipnskey from query parameter
+// 	if ok != true {
+// 		writeJSONError(w, "Error with getting ipnskey", nil)
+// 		return
+// 	}
+
+// 	if q.Index(ipnsKey) == -1 {
+// 		writeJSONError(w, "Key not in queue", nil)
+// 	} else {
+// 		q.Remove(q.Index(func (ipnsKey interface{} bool) {return ipnsKey}))
+// 		writeJSONSuccess(w, "Success - Removed key from queue", ipnsKey)
+// 	}
+// 	return
+// }
 
 // Helper function so that we can call internally and externally
 // returns the key at front of queue
@@ -393,16 +414,19 @@ func writeJSONSuccess(w http.ResponseWriter, msg string, val string) {
 
 
 func main() {
-	// Used to test if keys need to be passed as objects or ints?
+	// Used to test out individual functions
 	// testFunctions(ipfsPath)
+
+	// create, init, & start cron job
 	c := cron.New()
-	c.AddFunc("@every 2m", func() {
+	c.AddFunc("@every 2m", func() { 
 		ipfsPath := follow(true)
-		fmt.Printf(ipfsPath)	
+		fmt.Println(ipfsPath)	
 	})
 	c.Start()
 	
-	channel := make(chan os.Signal, 1)
+	// Watch for ctrl^c, close out cron job
+	channel := make(chan os.Signal, 1) 
 	signal.Notify(channel, os.Interrupt, syscall.SIGTERM)
 	go func(){
 		<-channel
@@ -410,8 +434,8 @@ func main() {
 		os.Exit(1)
 	}()
 
-	q.PushBack("k51qzi5uqu5dm876hw4kh2mn58rnajofhoohohymt9bui38q6ogsa0rrct6fnh")
-	// handles api/website routes.
+	// q.PushBack("k51qzi5uqu5dm876hw4kh2mn58rnajofhoohohymt9bui38q6ogsa0rrct6fnh")
+	// handles api/website routes
 	router := mux.NewRouter().StrictSlash(true)
     router.HandleFunc("/", index)
 	router.HandleFunc("/getKey", GetKey).Methods("GET")
