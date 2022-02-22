@@ -8,8 +8,6 @@ import (
 	shell "github.com/ipfs/go-ipfs-api"
 )
 
-// var ipfsURI = "/ipfs/"
-
 type PublishResponse struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
