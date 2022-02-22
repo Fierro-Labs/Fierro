@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
-	github.com/gammazero/deque v0.1.0
+	github.com/gammazero/deque v0.1.1
 	github.com/gopherjs/gopherjs v0.0.0-20190812055157-5d271430af9f // indirect
 	github.com/gorilla/mux v1.7.3
 	github.com/ipfs/go-datastore v0.5.1 // indirect
