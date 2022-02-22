@@ -16,8 +16,6 @@ The content of IPFS hashes are immutable, once you change a single letter and re
 
 The project serves keys upon request and publishes content on a users behalf to IPFS. The idea is to enable access to the IPFS network and IPNS functionality without having to run your own IPFS node. A user can only publish IPNS content if they have keys to sign the records. To enable that, the api only stores keys for the needed operations. Each key is deleted from the local node keystore and temp_key storage before returning.
 
-- *As of now, republishing is not implemented. But this will allow devs to come up with their own republishing mechanisms on top of the api. Currently, a user will have to be online to send us their private key to be able to republish. Or send their private key along with a new CID to update their record.*
-
 # Deep dive
 
 As previously mentioned, IPNS records need to be republished after a certain period of time. The reason for this is because this "world wide record" called the Distributed Hash Table (DHT) keeps track of IPNS records and what they point to. You can read on why they expire here [go-ipfs/issue#1958](https://github.com/ipfs/go-ipfs/issues/1958#issuecomment-410860667)
@@ -26,25 +24,27 @@ As previously mentioned, IPNS records need to be republished after a certain per
 
 There are seven endpoints currently:
 
-getKey() - This will generate and return a private/public key pair in .key format. These keys are used to create, update, and republish IPNS records.
+getKey() - This will generate and return a private/public key pair in .key format. *The private keys are used to create, update, and republish IPNS records.*
 
 postKey(<key_name>.key) - This will import the private key to node.
 
 deleteKey(<key_name> string) - This will delete private key from node.
 
-getRecord(<IPNS_key> string) - This will resolve what IPNS record points to and return IPFS Path. *Does not support continuous resolution aka IPNS Following*
+getRecord(<IPNS_key> string) - This will resolve what IPNS record points to and return IPFS Path. *Does not do continuous resolution aka IPNS Following*
 
 postRecord(<IPFS_CID> string, <key_name>.key) - This will publish a brand new IPNS record and return IPNS path. Saves private key to allow for republishing.
 
 putRecord(<IPNS_key> string, <key_name>.key) - This will resolve IPNS record and returns IPFS path. Saves private key to allow for republishing.
 
-followRecord(<IPNS_key> string) - This will add IPNS record to queue to allow for continuous resolution aka IPNS Following
+followRecord(<IPNS_key> string) - This will add IPNS record to queue to allow for continuous resolution aka IPNS Following. *Will not resolve record immediately use GetRecord() to resolve upon request.*
 
 add(file) - This will add content to IPFS. Will return CID.
 
 ### To Do
 
 add(dir) - This will add directory to IPFS. Will return CID.
+
+stopFollowing(<IPNS_key> string) - This will remove a key from the queue.
 
 
 # To Run
