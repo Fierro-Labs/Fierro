@@ -17,6 +17,7 @@ const FILE = "Hello"
 const localhost = "localhost:5001"
 
 const ipfsURI = "/ipfs/"
+const ipnsURI = "/ipns/"
 
 var q deque.Deque
 
@@ -74,7 +75,8 @@ func main() {
 	router.HandleFunc("/postRecord", PostRecord).Methods("POST")
 	router.HandleFunc("/putRecord", PutRecord).Methods("PUT")
 	router.HandleFunc("/getRecord", GetRecord).Methods("GET")
-	router.HandleFunc("/followRecord", FollowRecord).Methods("GET")
+	router.HandleFunc("/startFollowing", StartFollowing).Methods("POST")
+	router.HandleFunc("/stopFollowing", StopFollowing).Methods("Delete")
 	router.HandleFunc("/addFile", AddFile).Methods("POST")
 
 
