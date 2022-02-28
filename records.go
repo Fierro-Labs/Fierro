@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	// "errors"
-	
 )
 
 // This function will accept a ipns key and resolve it

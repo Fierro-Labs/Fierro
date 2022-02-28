@@ -10,7 +10,7 @@ require (
 	github.com/ipfs/go-cid v0.1.0 // indirect
 	github.com/ipfs/go-ipfs-api v0.3.0
 	github.com/kr/pretty v0.3.0 // indirect
-	github.com/libp2p/go-libp2p-core v0.12.0 // indirect
+	github.com/libp2p/go-libp2p-core v0.14.0 // indirect
 	github.com/multiformats/go-base32 v0.0.4 // indirect
 	github.com/multiformats/go-multiaddr v0.4.1 // indirect
 	github.com/multiformats/go-multihash v0.1.0 // indirect
