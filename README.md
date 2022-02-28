@@ -22,13 +22,13 @@ As previously mentioned, IPNS records need to be republished after a certain per
 
 # API 
 
-There are seven endpoints currently:
+There are nine endpoints currently:
 
 getKey() - This will generate and return a private/public key pair in .key format. *The private keys are used to create, update, and republish IPNS records.*
 
 postKey(<key_name>.key) - This will import the private key to node.
 
-deleteKey(<key_name> string) - This will delete private key from node.
+deleteKey(<keyName> string) - This will delete private key from node.
 
 getRecord(<IPNS_key> string) - This will resolve what IPNS record points to and return IPFS Path. *Does not do continuous resolution aka IPNS Following*
 
@@ -36,7 +36,9 @@ postRecord(<IPFS_CID> string, <key_name>.key) - This will publish a brand new IP
 
 putRecord(<IPNS_key> string, <key_name>.key) - This will resolve IPNS record and returns IPFS path. Saves private key to allow for republishing.
 
-followRecord(<IPNS_key> string) - This will add IPNS record to queue to allow for continuous resolution aka IPNS Following. *Will not resolve record immediately use GetRecord() to resolve upon request.*
+startFollowing(<IPNS_key> string) - This will add IPNS record to queue to allow for continuous resolution aka IPNS Following. Returns status 200 & IPNS_key. *Will not resolve record immediately use GetRecord() to resolve upon request.*
+
+stopFollowing(<IPNS_key> string) - This will remove a key from the queue. Returns status 200 & IPNS_key.
 
 add(file) - This will add content to IPFS. Will return CID.
 
@@ -44,7 +46,6 @@ add(file) - This will add content to IPFS. Will return CID.
 
 add(dir) - This will add directory to IPFS. Will return CID.
 
-stopFollowing(<IPNS_key> string) - This will remove a key from the queue.
 
 
 # To Run
