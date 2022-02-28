@@ -66,7 +66,7 @@ func importKey(keyName string, fileName string) error {
 	cmd := exec.Command("ipfs", args...)
 	stdout, err := cmd.Output()
 	if err != nil {
-		fmt.Println(os.Stderr, "Error in importKey: %s", err)
+		fmt.Fprintf(os.Stderr, "Error in importKey: %s", err)
 		return err
 	}
 	fmt.Println(string(stdout))

@@ -26,7 +26,7 @@ func addToIPFS(file string) (string, error) {
 	sh := shell.NewShell(localhost)
 	fileReader, err := os.Open(file)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "error: %s ", err)
+		fmt.Fprintf(os.Stderr, "error: %s ", err)
 		return "", err
 	}
 	cid, err:= sh.Add(fileReader)
