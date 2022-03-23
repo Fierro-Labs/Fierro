@@ -4,19 +4,19 @@ LOCALHOST="localhost"
 host="$LOCALHOST$PORT"
 echo $host
 
-# curl --request POST http://$host/addFile -F "file=@Hello" -v
+curl --request POST http://$host/addFile -F "file=@Hello"
 
-# curl --request GET http://$host/getKey
+# curl --request GET http://$host/getKey --output temp.key
 
 # curl --request POST http://$host/postKey? -F "file=@temp.key" -v
 
 # curl --request DELETE http://$host/deleteKey?keyName=temp
 
-# curl --request GET http://$host/getRecord?ipnskey=k51qzi5uqu5dm876hw4kh2mn58rnajofhoohohymt9bui38q6ogsa0rrct6fnh
-
 # curl --request POST http://$host/startFollowing?ipnskey=k51qzi5uqu5dm876hw4kh2mn58rnajofhoohohymt9bui38q6ogsa0rrct6fnh
 
-curl --request DELETE http://$host/stopFollowing?ipnskey=k51qzi5uqu5dm876hw4kh2mn58rnajofhoohohymt9bui38q6ogsa0rrct6fnh
+# curl --request GET http://$host/getRecord?ipnskey=k51qzi5uqu5dm876hw4kh2mn58rnajofhoohohymt9bui38q6ogsa0rrct6fnh
+
+# curl --request DELETE http://$host/stopFollowing?ipnskey=k51qzi5uqu5dm876hw4kh2mn58rnajofhoohohymt9bui38q6ogsa0rrct6fnh
 
 # curl --request POST http://$host/postRecord?CID=QmSVjCYjy4jYZynyC2i5GeFgjhq1bLCK2vrkRz5ffnssqo -F "file=@temp.key" -v
 
