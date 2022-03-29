@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"os/signal"
 	"syscall"
 	"net/http"
@@ -33,18 +34,47 @@ func AddFile(w http.ResponseWriter, r *http.Request) {
 
 	FileName, err := saveFile(r, dir, 32 << 20) // grab uploaded content & save to disk
 	if err != nil {
-		writeJSONError(w, "Error in saveFile", err)
+		writeJSONError(w, "Error in saveContent", err)
 		return
 	}
 
 	fmt.Println("Adding to IPFS...")
-	ipfsPath, err := addToIPFS(dir+"/"+FileName) // add content file to IPFS
+	ipfsPath, err := addToIPFS(dir+"/"+FileName, "") // add content file to IPFS
 	if err != nil {
 		writeJSONError(w, "Error in addToIPFS", err)
 		return
 	}
 	fmt.Println("ipfs Path: ", ipfsPath)
 	writeJSONSuccess(w, "Success - addFile", ipfsPath)
+}
+
+// Grab uploaded file and add to ipfs
+// returns ipfsPath (ipfsURI + CID)
+func addFolder(w http.ResponseWriter, r *http.Request) {
+	const dir = "Uploads"
+
+	dirPath, dirName, err := saveDir(r, dir, 200000) // grab uploaded content & save to disk
+	if err != nil {
+		writeJSONError(w, "Error in saveDir", err)
+		return
+	}
+
+	fmt.Println("Dir created: ", dirPath)
+	err = unzipSource(dirPath+"/"+dirName, dirPath+"/unzip/")
+	if err != nil {
+		writeJSONError(w, "Error in unzipSource", err)
+		return
+	}
+	fileName := removeExtenstion(dirName)
+	fmt.Println("fileName: ", fileName)
+	fmt.Println("Adding to IPFS...")
+	ipfsPath, err := addToIPFS(strings.Join([]string{dirPath, "/unzip/", fileName}, ""), "r") // add content file to IPFS
+	if err != nil {
+		writeJSONError(w, "Error in addToIPFS", err)
+		return
+	}
+	fmt.Println("ipfs Path: ", ipfsPath)
+	writeJSONSuccess(w, "Success - addFolder", ipfsPath)
 }
 
 func main() {
@@ -78,8 +108,11 @@ func main() {
 	router.HandleFunc("/startFollowing", StartFollowing).Methods("POST")
 	router.HandleFunc("/stopFollowing", StopFollowing).Methods("Delete")
 	router.HandleFunc("/addFile", AddFile).Methods("POST")
+	router.HandleFunc("/addFolder", addFolder).Methods("POST")
 
+	fs := http.FileServer(http.Dir("./static/"))
+    router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
 
-	fmt.Printf("Starting server at port 8082\n")
+	fmt.Printf("Starting server at http://localhost:8082\n")
 	log.Fatal(http.ListenAndServe(":8082", router))
 }

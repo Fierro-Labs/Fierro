@@ -4,7 +4,7 @@ LOCALHOST="localhost"
 host="$LOCALHOST$PORT"
 echo $host
 
-curl --request POST http://$host/addFile -F "file=@Hello"
+# curl --request POST http://$host/addFile -F "file=@Hello"
 
 # curl --request GET http://$host/getKey --output temp.key
 
@@ -28,3 +28,5 @@ curl --request POST http://$host/addFile -F "file=@Hello"
 # ipfs key rm temp1
 
 # curl --request PUT http://$host/putRecord?ipnskey="$ipnskey" -F "file=@temp1.key" -v
+
+# curl --request POST http://$host/addDir -F "files=@Hello" -F "files=@Hello1" -F "files=@css/"

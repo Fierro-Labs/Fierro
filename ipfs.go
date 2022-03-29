@@ -18,24 +18,40 @@ type ResolvedPath struct {
 }
 
 
-// Adds file to IPFS, given path/filename,
+// Adds path to IPFS, given as a string
 // returns CID
-func addToIPFS(file string) (string, error) {
+func addToIPFS(path string, option string) (string, error) {
 	sh := shell.NewShell(localhost)
-	fileReader, err := os.Open(file)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %s ", err)
-		return "", err
+	var ipfsPath string
+
+	if option == "r" {
+		cid, err := sh.AddDir(path)
+		if err != nil {
+			fmt.Println("Error in adding content to ipfs: ", err)
+			return "", err
+		}
+		ipfsPath = ipfsURI + cid
+		
+	} else {
+		fileReader, err := os.Open(path)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error: %s ", err)
+			return "", err
+		}
+		defer fileReader.Close()
+
+		cid, err := sh.Add(fileReader)
+		if err != nil {
+			fmt.Println("Error in adding content to ipfs: ", err)
+			return "", err
+		}
+		ipfsPath = ipfsURI + cid
 	}
-	cid, err:= sh.Add(fileReader)
-	if err != nil {
-		fmt.Println("Error in adding file to ipfs: ", err)
-		return "", err
-	}
-	ipfsPath := ipfsURI + cid
+
 	fmt.Printf("Added %s\n", ipfsPath)
 	return ipfsPath, nil
 }
+
 
 // Custom publishing function returns the response object and error
 // Kept as close as possible to Publish method found at gh.com/go-ipfs-api
