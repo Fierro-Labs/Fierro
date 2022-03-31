@@ -11,10 +11,10 @@ import (
 	"encoding/json"
 	"io"
 	"strings"
-	"math/rand"
-	"strconv"
+	"path"
 	"path/filepath"
-
+	"mime/multipart"
+	"errors"
 
 	shell "github.com/ipfs/go-ipfs-api"
 
@@ -27,7 +27,7 @@ func writeJSONError(w http.ResponseWriter, msg string, err error) {
 	resp["error"] = err
 	jsonResp, err:= json.Marshal(resp)
 	if err != nil {
-		log.Fatalf("Error in JSON marshal. Err: %s", err)
+		log.Fatalf("Error in JSON marshal. Err: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -89,47 +89,34 @@ func saveFile(r *http.Request, dir string, size int64) (string, error) {
 	return FileName, nil
 }
 
-// Grabs a set of files and saves them to specified users dir
-// returns the directory name
-func saveDir(r *http.Request, dir string, size int64) (string, string, error) {
-	pattern := strconv.Itoa(rand.New(rand.NewSource(time.Now().UnixNano())).Intn(10000))
+// Takes a folder that is in .zip format and saves it to specified dir
+// returns the location and name of file
+func saveDir(file multipart.File, fileHeader *multipart.FileHeader, dir string, maxUploadSize int64) (string, error) {
+	pattern := fmt.Sprintf("%d", time.Now().UnixNano())
 	path := strings.Join([]string{dir, "/user", pattern}, "")
+	// fmt.Println("path: ", path)
 
-	err := os.Mkdir(path, os.ModePerm)
+	// Create the uploads folder if it doesn't
+	// already exist
+	err := os.MkdirAll(path, os.ModePerm)
 	if err != nil {
-		return "Dir not created", "", err
+		return "", err
 	}
-	err = r.ParseMultipartForm(size) // grab the multipart form
- 	if err != nil {
- 		return "Problem parsing Form", "", err
- 	}
 
- 	formdata := r.MultipartForm // ok, no problem so far, read the Form data
-
- 	//get the *fileheaders
- 	files := formdata.File["files"] // grab the filenames
-
- 	for i, _ := range files { // loop through the files one by one
- 		file, err := files[i].Open()
- 		defer file.Close()
- 		if err != nil {
- 			return "", "", err
- 		}
-
- 		out, err := os.Create(path + "/" + files[i].Filename)
-
- 		defer out.Close()
- 		if err != nil {
- 			return "No such file or directory", files[i].Filename, err
- 		}
-
- 		_, err = io.Copy(out, file) // file not files[i] !
-
- 		if err != nil {
- 			return "Error with io.copy", files[i].Filename, err
- 		}
+	out, err := os.Create(strings.Join([]string{path,"/", cleanFileName(fileHeader.Filename)}, ""))
+	if err != nil {
+		return "", err
 	}
-	return path, files[0].Filename, nil
+	defer out.Close()
+
+	// Copy the uploaded file to the filesystem
+	// at the specified destination
+	_, err = io.Copy(out, file)
+	if err != nil {
+		return "", err
+	}
+
+	return path, nil
 }
 
 // Generate keys and embed records. Meant to test how keys are needed to be passed.
@@ -162,6 +149,7 @@ func testFunctions(ipfsPath string) {
 	fmt.Printf("functions individually work.\n\n")
 }
 
+// Unzip directory at source location, iteratively calls unzipFile to unzip sub structures.
 func unzipSource(source, destination string) error {
     // 1. Open the zip file
     reader, err := zip.OpenReader(source)
@@ -188,6 +176,7 @@ func unzipSource(source, destination string) error {
     return nil
 }
 
+// Unzips a file to specified dir. 
 func unzipFile(f *zip.File, destination string) error {
     // 4. Check if file paths are not vulnerable to Zip Slip
     filePath := filepath.Join(destination, f.Name)
@@ -227,13 +216,44 @@ func unzipFile(f *zip.File, destination string) error {
     return nil
 }
 
+// Removes the file extension of a given file name using slices. 
+// returns the altered name as a string
 func removeExtenstion(fileName string) string {
 	return fileName[:len(fileName)-len(filepath.Ext(fileName))]
 }
 
+// returns the last element of the path. 
+func cleanFileName(fileName string) string {
+	return path.Base(fileName)
+}
 
+// This function will check and restrict the file types submitted
+// returns custom error message along with err/nil
+func checkFileType(file multipart.File, fileHeader *multipart.FileHeader) (string, error) {
+	// Read 512 bytes of the file
+	buff := make([]byte, 512)
+	_, err := file.Read(buff)
+	if err != nil {
+		return "Error in reading Dir", err
+	}
 
-
-
-
-// Leaving to go eat. I am trying to accept a zip folder (works) and unzip it to a different directory. So I made an unzip dir to unzip the stuff too and then I will add to IPFS from that dir.
+	// check content/mime type for zip folders
+	fileType := http.DetectContentType(buff)
+	// fmt.Println("File type:", fileType)
+	switch fileType {
+		case "application/zip":
+			break
+		case "application/x-gzip":
+			fmt.Println("File is compressed with gzip")
+		default:
+			fmt.Println("File is not compressed")
+			return "The provided file format is not allowed. Please upload a compressed/zip folder", errors.New("Error with DetectContentType")
+	}
+	
+	// Move request body pointer to start of body
+	_, err = file.Seek(0, io.SeekStart)
+	if err != nil {
+		return "Error returning request pointer to beginning", err
+	}
+	return "Success", nil
+}
