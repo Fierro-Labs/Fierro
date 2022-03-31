@@ -142,3 +142,53 @@ func badRequest(wrt http.ResponseWriter, req *http.Request) {
 		wrt.Write(jsonResp)
     } 
 }
+
+// Grab all subfiles from a Directory
+func getAllFilesFromSubmittedDir(file multipart.File, fileHeader *multipart.FileHeader, r *http.Request){
+	// The argument to FormFile must match the name attribute
+	// of the file input on the frontend
+	file, fileHeader, err := r.FormFile("files")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		os.Exit(1)
+	}
+	defer file.Close()
+	
+	//get the *fileheaders
+ 	files := r.MultipartForm.File["files"]
+
+	// Open the zip file
+	file, err := files[0].Open()
+	if err != nil {
+		return "","", fmt.Errorf("Error opening file %g", err)
+	}
+	defer file.Close()
+
+	err = os.Mkdir(path, os.ModePerm)
+	if err != nil {
+		return "", "", fmt.Errorf("Dir not created %g", err)
+	}
+
+	// loop through the files one by one
+ 	for i, _ := range files {
+		fmt.Println("Looping")
+ 		file, err := files[i].Open()
+ 		defer file.Close()
+ 		if err != nil {
+ 			return "", "", fmt.Errorf(strings.Join([]string{"Error opening file", files[i].Filename}, ""), err)
+ 		}
+
+ 		out, err := os.Create(path + "/" + files[i].Filename)
+
+ 		defer out.Close()
+ 		if err != nil {
+ 			return "","", fmt.Errorf(strings.Join([]string{"Error creating file path", files[i].Filename}, ""), err)
+ 		}
+
+ 		_, err = io.Copy(out, file) // file not files[i] !
+
+ 		if err != nil {
+ 			return "", "", fmt.Errorf(strings.Join([]string{"Error copying file", files[i].Filename}, ""), err)
+ 		}
+	}
+}
