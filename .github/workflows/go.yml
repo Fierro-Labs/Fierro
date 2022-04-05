@@ -22,4 +22,12 @@ jobs:
       run: go build -v .
 
     - name: Test
-      run: go test -v .
+      run: go test -race -coverprofile=coverage.out -covermode=atomic
+    - uses: actions/checkout@master
+    - name: Upload to Codecov
+    - uses: codecov/codecov-action@v2
+      with:
+        flags: unittests # optional
+        name: codecov-Fierro # optional
+        fail_ci_if_error: true # optional (default = false)
+        verbose: true # optional (default = false)
