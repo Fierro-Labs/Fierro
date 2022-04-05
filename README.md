@@ -7,13 +7,19 @@
     <a href="https://github.com/Fierro-Labs/Fierro/actions">
       <img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/Fierro-Labs/Fierro/Go">
     </a>
-    <a href="https://codecov.io/gh/Fierro-Labs/Fierro"><img src="https://badgen.net/codecov/c/github/Fierro-Labs/Fierro" /></a>
+    <a href="https://codecov.io/gh/Fierro-Labs/Fierro">
+      <img src="https://codecov.io/gh/Fierro-Labs/Fierro/branch/main/graph/badge.svg?token=1IRKRN16IC"/>
+    </a>
     <a href="https://github.com/Fierro-Labs/Fierro/issues">
       <img alt="Issues" src="https://img.shields.io/github/issues/Fierro-Labs/Fierro?color=0088ff" />
     </a>
     <a href="https://github.com/Fierro-Labs/Fierro/pulls">
       <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/Fierro-Labs/Fierro?color=0088ff" />
     </a>
+    <a href="https://github.com/Fierro-Labs/Fierro/graphs/contributors" alt="Contributors">
+        <img src="https://img.shields.io/github/contributors/Fierro-Labs/Fierro" />
+    </a>
+    <img alt="GitHub Sponsors" src="https://img.shields.io/github/sponsors/Fierro-Labs">
     <img alt="GitHub" src="https://img.shields.io/github/license/Fierro-Labs/Fierro">
     <br />
   </p>
