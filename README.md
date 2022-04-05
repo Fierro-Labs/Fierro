@@ -1,4 +1,23 @@
-# IPNSGoServer
+<p align="center">
+ <img width="200px" src="https://res.cloudinary.com/doy7gfxuc/image/upload/c_crop,h_800,w_900,g_west/Transparent_Logo_pt3s7z.png" align="center" alt="GitHub Readme Stats" />
+ <h2 align="center">Fierro API</h2>
+ <p align="center">An IPNS Pinning Service</p>
+</p>
+  <p align="center">
+    <a href="https://github.com/Fierro-Labs/Fierro/actions">
+      <img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/Fierro-Labs/Fierro/Go">
+    </a>
+    <a href="https://codecov.io/gh/Fierro-Labs/Fierro"><img src="https://badgen.net/codecov/c/github/Fierro-Labs/Fierro" /></a>
+    <a href="https://github.com/Fierro-Labs/Fierro/issues">
+      <img alt="Issues" src="https://img.shields.io/github/issues/Fierro-Labs/Fierro?color=0088ff" />
+    </a>
+    <a href="https://github.com/Fierro-Labs/Fierro/pulls">
+      <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/Fierro-Labs/Fierro?color=0088ff" />
+    </a>
+    <img alt="GitHub" src="https://img.shields.io/github/license/Fierro-Labs/Fierro">
+    <br />
+  </p>
+</p>
 
 # About 
 
@@ -22,7 +41,7 @@ As previously mentioned, IPNS records need to be republished after a certain per
 
 # API 
 
-There are nine endpoints currently:
+There are ten endpoints currently:
 
 getKey() - This will generate and return a private/public key pair in .key format. *The private keys are used to create, update, and republish IPNS records.*
 
@@ -41,8 +60,6 @@ startFollowing(<IPNS_key> string) - This will add IPNS record to queue to allow 
 stopFollowing(<IPNS_key> string) - This will remove a key from the queue. Returns status 200 & IPNS_key.
 
 add(file) - This will add content to IPFS. Will return CID.
-
-### To Do
 
 add(dir) - This will add directory to IPFS. Will return CID.
 
