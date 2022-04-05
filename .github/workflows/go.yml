@@ -23,9 +23,9 @@ jobs:
 
     - name: Test
       run: go test -race -coverprofile=coverage.out -covermode=atomic
-    - uses: actions/checkout@master
+    
     - name: Upload to Codecov
-    - uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v2
       with:
         flags: unittests # optional
         name: codecov-Fierro # optional
