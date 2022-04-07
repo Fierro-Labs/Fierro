@@ -4,11 +4,11 @@ LOCALHOST="localhost"
 host="$LOCALHOST$PORT"
 echo $host
 
-# curl --request POST http://$host/addFile -F "file=@Hello"
+curl --request POST http://$host/addFile -F "file=@Hello" # add a file from current directory called Hello, to IPFS
 
-# curl --request GET http://$host/getKey --output temp.key
+# curl --request GET http://$host/getKey --output temp.key # returns content to a file you specify as temp.key
 
-curl --request POST http://$host/postKey -F "file=@temp.key" -v
+# curl --request POST http://$host/postKey -F "file=@temp.key" -v # send file to API
 
 # curl --request DELETE http://$host/deleteKey?keyName=temp
 
@@ -28,5 +28,3 @@ curl --request POST http://$host/postKey -F "file=@temp.key" -v
 # ipfs key rm temp1
 
 # curl --request PUT http://$host/putRecord?ipnskey="$ipnskey" -F "file=@temp1.key" -v
-
-# curl --request POST http://$host/addDir -F "files=@Hello" -F "files=@Hello1" -F "files=@css/"
