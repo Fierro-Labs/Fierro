@@ -111,7 +111,7 @@ func makeEntry(sk ic.PrivKey, ipfsPath) (*pb.IpnsEntry, nil) {
 }
 
 // This function takes a key name and searches for it in local node Keystore.
-// returns nil if sucessfull & stores key as file in current dir.
+// returns nil if sucessfull
 func exportKey(keyName string) error {
 	sh := shell.NewShell(localhost)
 	var err error
