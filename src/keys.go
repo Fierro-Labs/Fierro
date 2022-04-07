@@ -126,7 +126,7 @@ func GetKey(w http.ResponseWriter, r *http.Request) {
 // This function will save a key to node, then delete the uploaded file from disk
 // Returns 200 & key name as confirmation
 func PostKey(w http.ResponseWriter, r *http.Request) {
-	const dir = "KeyStore"
+	var dir = abs+"KeyStore"
 	FileName, err := saveFile(r, dir, 32 << 10) // grab uploaded .key file
 	if err != nil {
 		writeJSONError(w, "Error in saveFile", err)

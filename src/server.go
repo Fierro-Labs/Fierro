@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 	"net/http"
+	"path/filepath"
 
     "github.com/gorilla/mux"
 	"github.com/gammazero/deque"
@@ -21,6 +22,7 @@ const localhost = "localhost:5001"
 const ipfsURI = "/ipfs/"
 const ipnsURI = "/ipns/"
 
+var abs, _ = filepath.Abs("../")
 var q deque.Deque
 
 func index(w http.ResponseWriter, r *http.Request){
@@ -111,8 +113,7 @@ func addFolder(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	// Used to test if keys need to be passed as objects or ints?
-	// testFunctions(ipfsPath)
+	// Init a cron job that runs every x minutes
 	c := cron.New()
 	c.AddFunc("@every 2m", func() {
 		ipfsPath := follow()
@@ -120,6 +121,7 @@ func main() {
 	})
 	c.Start()
 	
+	// Catch ctrl+c signal to kill threads 
 	channel := make(chan os.Signal, 1)
 	signal.Notify(channel, os.Interrupt, syscall.SIGTERM)
 	go func(){
@@ -128,6 +130,8 @@ func main() {
 		os.Exit(1)
 	}()
 
+	
+	fmt.Println("abs:", abs)
 	q.PushBack("k51qzi5uqu5dm876hw4kh2mn58rnajofhoohohymt9bui38q6ogsa0rrct6fnh")
 	// handles api/website routes.
 	router := mux.NewRouter().StrictSlash(true)
