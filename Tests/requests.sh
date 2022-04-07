@@ -8,7 +8,7 @@ echo $host
 
 # curl --request GET http://$host/getKey --output temp.key
 
-# curl --request POST http://$host/postKey? -F "file=@temp.key" -v
+curl --request POST http://$host/postKey -F "file=@temp.key" -v
 
 # curl --request DELETE http://$host/deleteKey?keyName=temp
 
