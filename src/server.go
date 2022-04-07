@@ -33,7 +33,7 @@ func index(w http.ResponseWriter, r *http.Request){
 // Grab uploaded file and add to ipfs
 // returns ipfsPath (ipfsURI + CID)
 func AddFile(w http.ResponseWriter, r *http.Request) {
-	const dir = "Uploads"
+	var dir = abs+"/Uploads"
 
 	FileName, err := saveFile(r, dir, MAX_UPLOAD_SIZE) // grab uploaded content & save to disk
 	if err != nil {
@@ -54,7 +54,7 @@ func AddFile(w http.ResponseWriter, r *http.Request) {
 // Grab uploaded file and add to ipfs
 // returns ipfsPath (ipfsURI + CID)
 func addFolder(w http.ResponseWriter, r *http.Request) {
-	const dir = "Uploads"
+	var dir = abs+"/Uploads"
 
 	// Check uploaded files/Dir is not bigger than MAX_UPLOAD_SIZE
 	r.Body = http.MaxBytesReader(w, r.Body, MAX_UPLOAD_SIZE)
@@ -147,7 +147,7 @@ func main() {
 	router.HandleFunc("/addFile", AddFile).Methods("POST")
 	router.HandleFunc("/addFolder", addFolder).Methods("POST")
 
-	fs := http.FileServer(http.Dir("./static/"))
+	fs := http.FileServer(http.Dir(abs+"/static/"))
     router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
 
 	fmt.Printf("Starting server at http://localhost:8082\n")

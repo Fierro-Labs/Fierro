@@ -104,7 +104,7 @@ func GetKey(w http.ResponseWriter, r *http.Request) {
 	// log.Println("Url Param 'keyName' is: " + string(keyName))
 	w.Header().Set("Content-Disposition", "attachment; filename="+string(keyName))
 	w.Header().Set("Content-Type", "application/octet-stream")
-	w.WriteHeader(http.StatusOK)
+	// w.WriteHeader(http.StatusOK)
 	http.ServeFile(w, r, string(keyName) + ".key") // serve key to user to download
 
 
@@ -126,7 +126,8 @@ func GetKey(w http.ResponseWriter, r *http.Request) {
 // This function will save a key to node, then delete the uploaded file from disk
 // Returns 200 & key name as confirmation
 func PostKey(w http.ResponseWriter, r *http.Request) {
-	var dir = abs+"KeyStore"
+	var dir = abs+"/KeyStore"
+	fmt.Println("dir: ", dir)
 	FileName, err := saveFile(r, dir, 32 << 10) // grab uploaded .key file
 	if err != nil {
 		writeJSONError(w, "Error in saveFile", err)
