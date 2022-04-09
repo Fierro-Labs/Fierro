@@ -115,7 +115,7 @@ func addFolder(w http.ResponseWriter, r *http.Request) {
 func main() {
 	// Init a cron job that runs every x minutes
 	c := cron.New()
-	c.AddFunc("@every 2m", func() {
+	c.AddFunc("@every 5m", func() {
 		ipfsPath := follow()
 		fmt.Printf("%s\n",ipfsPath)	
 	})
@@ -131,8 +131,8 @@ func main() {
 	}()
 
 	
-	fmt.Println("abs:", abs)
-	q.PushBack("k51qzi5uqu5dm876hw4kh2mn58rnajofhoohohymt9bui38q6ogsa0rrct6fnh")
+	// fmt.Println("abs:", abs)
+	// q.PushBack("k51qzi5uqu5dm876hw4kh2mn58rnajofhoohohymt9bui38q6ogsa0rrct6fnh")
 	// handles api/website routes.
 	router := mux.NewRouter().StrictSlash(true)
     router.HandleFunc("/", index)

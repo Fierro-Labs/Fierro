@@ -25,8 +25,6 @@ func GetRecord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	q.PushBack(ipnsKey)
-
 	writeJSONSuccess(w, "Success - GetRecord", ipfsPath)
 }
 
@@ -34,7 +32,7 @@ func GetRecord(w http.ResponseWriter, r *http.Request) {
 // IPFS Node handles republishing automatically in the background as long as it is up and running
 // Returns ACK & IPNS path
 func PostRecord(w http.ResponseWriter, r *http.Request) {
-	const dir = "KeyStore"
+	var dir = abs+"/KeyStore"
 	
 	fmt.Println("Getting CID...")
 	CID, ok := GetParam(r, "CID") // grab CID from query parameter
@@ -79,7 +77,7 @@ func PostRecord(w http.ResponseWriter, r *http.Request) {
 // IPFS Node handles republishing automatically in the background as long as it is up and running
 // Returns ACK & resolved content
 func PutRecord(w http.ResponseWriter, r *http.Request) {
-	const dir = "KeyStore"
+	var dir = abs+"/KeyStore"
 	
 	fmt.Println("Getting IPNS Key...")
 	key, ok := GetParam(r, "ipnskey") // grab key from query parameter
