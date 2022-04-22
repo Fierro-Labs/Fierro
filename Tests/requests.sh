@@ -4,7 +4,7 @@ LOCALHOST="localhost"
 host="$LOCALHOST$PORT"
 # echo $host
 
-curl --request POST http://$host/addFile -F "file=@Hello" # add a file from current directory called Hello, to IPFS
+# curl --request POST http://$host/addFile -F "file=@Hello" # add a file from current directory called Hello, to IPFS
 
 # curl --request GET http://$host/getKey --output temp.key # returns key to user, you specify as temp.key
 
@@ -16,9 +16,9 @@ curl --request POST http://$host/addFile -F "file=@Hello" # add a file from curr
 
 # curl --request GET http://$host/getRecord?ipnskey=k51qzi5uqu5dmfs21tga7t45wltgilzu6d6krek7fcvzlyhn7x2wxp4rweyla0 # get IPFS Path of record 
 
-# curl --request POST http://$host/startFollowing?ipnskey=k51qzi5uqu5dmfs21tga7t45wltgilzu6d6krek7fcvzlyhn7x2wxp4rweyla0 # add IPNS ID to queue for tracking
+# curl --request POST http://$host/startFollowing?ipnskey=k51qzi5uqu5diir8lcwn6n9o4k2dhohp0e16ur82vw55abv5xfi91mp00ie0ml # add IPNS ID to queue for tracking
 
-# curl --request DELETE http://$host/stopFollowing?ipnskey=k51qzi5uqu5dmfs21tga7t45wltgilzu6d6krek7fcvzlyhn7x2wxp4rweyla0 # delete IPNS ID from queue to stop tracking
+# curl --request DELETE http://$host/stopFollowing?ipnskey=k51qzi5uqu5diir8lcwn6n9o4k2dhohp0e16ur82vw55abv5xfi91mp00ie0ml # delete IPNS ID from queue to stop tracking
 
 # for ease of use, just using local commands
 # ipfspath=$(ipfs add Hello)
