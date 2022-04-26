@@ -32,7 +32,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 func main() {
 	// Init a cron job that runs every x minutes
 	c := cron.New()
-	c.AddFunc("@every 1m", func() {
+	c.AddFunc("@every 3m", func() {
 		ipfsPath := follow()
 		fmt.Printf("%s\n", ipfsPath)
 	})

@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strings"
 	// "errors"
-	
 )
 
 // This function will accept a ipns key and resolve it
@@ -32,8 +31,8 @@ func GetRecord(w http.ResponseWriter, r *http.Request) {
 // IPFS Node handles republishing automatically in the background as long as it is up and running
 // Returns ACK & IPNS path
 func PostRecord(w http.ResponseWriter, r *http.Request) {
-	var dir = abs+"/KeyStore"
-	
+	var dir = abs + "/KeyStore"
+
 	fmt.Println("Getting CID...")
 	CID, ok := GetParam(r, "CID") // grab CID from query parameter
 	if ok != true {
@@ -41,7 +40,7 @@ func PostRecord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	FileName, err := saveFile(r, dir, 32 << 10) // grab uploaded .key file
+	FileName, err := saveFile(r, dir, 32<<10) // grab uploaded .key file
 	if err != nil {
 		writeJSONError(w, "Error in saveFile", err)
 		return
@@ -56,14 +55,14 @@ func PostRecord(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println("Publishing to IPNS...")
-	pubResp, err := publishToIPNS(ipfsURI + CID, name) //publish IPNS record to IPFS
+	pubResp, err := publishToIPNS(ipfsURI+CID, name) //publish IPNS record to IPFS
 	if err != nil {
 		writeJSONError(w, "Error in publishToIPNS", err)
 		return
 	}
 
 	fmt.Println("Deleting exported key...")
-	err = diskDelete(dir+"/"+FileName) // delete key from disk
+	err = diskDelete(dir + "/" + FileName) // delete key from disk
 	if err != nil {
 		writeJSONError(w, "Error in diskDelete", err)
 		return
@@ -77,8 +76,8 @@ func PostRecord(w http.ResponseWriter, r *http.Request) {
 // IPFS Node handles republishing automatically in the background as long as it is up and running
 // Returns ACK & resolved content
 func PutRecord(w http.ResponseWriter, r *http.Request) {
-	var dir = abs+"/KeyStore"
-	
+	var dir = abs + "/KeyStore"
+
 	fmt.Println("Getting IPNS Key...")
 	key, ok := GetParam(r, "ipnskey") // grab key from query parameter
 	if ok != true {
@@ -86,7 +85,7 @@ func PutRecord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	FileName, err := saveFile(r, dir, 32 << 10) // grab uploaded .key file
+	FileName, err := saveFile(r, dir, 32<<10) // grab uploaded .key file
 	if err != nil {
 		writeJSONError(w, "Error in saveFile", err)
 		return
@@ -108,7 +107,7 @@ func PutRecord(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println("Deleting saved key from disk...")
-	err = diskDelete(dir+"/"+FileName) // delete key from disk
+	err = diskDelete(dir + "/" + FileName) // delete key from disk
 	if err != nil {
 		writeJSONError(w, "Error in deleteKey", err)
 		return
@@ -125,9 +124,9 @@ func StartFollowing(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, "Error with getting key: "+key, nil)
 		return
 	}
-	
+
 	q.PushBack(key)
-	
+
 	writeJSONSuccess(w, "Success - Started following", key)
 }
 
@@ -138,7 +137,7 @@ func StopFollowing(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, "Error with getting key: "+key, nil)
 		return
 	}
-	
+
 	err := stopFollow(key)
 	if err != nil {
 		writeJSONError(w, "Error in StopFollow", err)
@@ -151,7 +150,7 @@ func StopFollowing(w http.ResponseWriter, r *http.Request) {
 // return success or error
 func stopFollow(ipnsKey string) error {
 	if q.Len() < 1 {
-		fmt.Sprintf("Queue is empty")
+		fmt.Printf("Queue is empty")
 		return fmt.Errorf("Queue is empty")
 	}
 
@@ -171,14 +170,14 @@ func stopFollow(ipnsKey string) error {
 
 // This function resolves and rotates keys in queue
 // returns the key at front of queue
-func follow() (string) {
+func follow() string {
 	// if q is empty
 	if q.Len() < 1 {
-		fmt.Sprintf("Queue is empty")
+		fmt.Printf("Queue is empty")
 		return ""
 	}
 
-	ipnsKey := fmt.Sprintf("%s", q.Front())// Used to convert interface to string
+	ipnsKey := fmt.Sprintf("%s", q.Front()) // Used to convert interface to string
 
 	q.Rotate(1) //moves front elem to the back
 
