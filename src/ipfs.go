@@ -30,13 +30,11 @@ func AddFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("Adding to IPFS...")
 	ipfsPath, err := addToIPFS(dir+"/"+FileName, "") // add content file to IPFS
 	if err != nil {
 		writeJSONError(w, "Error in addToIPFS", err)
 		return
 	}
-	fmt.Println("ipfs Path: ", ipfsPath)
 	writeJSONSuccess(w, "Success - addFile", ipfsPath)
 }
 
@@ -72,7 +70,6 @@ func addFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// fmt.Println("Dir created: ", dirPath)
 	cleanedFileName := cleanFileName(fileHeader.Filename)
 	fileName := removeExtenstion(cleanedFileName)
 	err = unzipSource(dirPath+"/"+cleanedFileName, dirPath+"/unzip/")
@@ -81,8 +78,6 @@ func addFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// fmt.Println("fileName: ", fileName)
-	fmt.Println("Adding to IPFS...")
 	ipfsPath, err := addToIPFS(strings.Join([]string{dirPath, "/unzip/", fileName}, ""), "r") // add content file to IPFS
 	if err != nil {
 		writeJSONError(w, "Error in addToIPFS", err)
@@ -97,7 +92,6 @@ func addFolder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("ipfs Path: ", ipfsPath)
 	writeJSONSuccess(w, "Success - addFolder", ipfsPath)
 }
 
@@ -131,7 +125,6 @@ func addToIPFS(path string, option string) (string, error) {
 		ipfsPath = ipfsURI + cid
 	}
 
-	fmt.Printf("Added %s\n", ipfsPath)
 	return ipfsPath, nil
 }
 
@@ -162,8 +155,6 @@ func publishToIPNS(ipfsPath string, KeyName string) (*PublishResponse, error) {
 		fmt.Printf("\nExpected to receive %s but got %s", ipfsPath, pubResp.Value)
 		return nil, err
 	}
-
-	fmt.Printf("\nresponse Name: %s\nresponse Value: %s\n", pubResp.Name, pubResp.Value)
 
 	return pubResp, nil
 }

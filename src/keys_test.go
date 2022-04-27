@@ -48,7 +48,6 @@ func TestGet(t *testing.T) {
 		fx         http.HandlerFunc
 		statusCode int
 		expected   []byte
-		err        error
 	}{
 		{
 			method:     "GET",

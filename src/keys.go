@@ -51,12 +51,11 @@ func diskDelete(keyPath string) error {
 func exportKey(keyName string) error {
 	args := []string{"key", "export", keyName}
 	cmd := exec.Command("ipfs", args...)
-	stdout, err := cmd.Output()
+	_, err := cmd.Output()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error in exportKey: %s ", err)
 		return err
 	}
-	fmt.Println(string(stdout))
 	return nil
 }
 
@@ -65,12 +64,11 @@ func exportKey(keyName string) error {
 func importKey(keyName string, fileName string) error {
 	args := []string{"key", "import", keyName, fileName}
 	cmd := exec.Command("ipfs", args...)
-	stdout, err := cmd.Output()
+	_, err := cmd.Output()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error in importKey: %s", err)
 		return err
 	}
-	fmt.Println(string(stdout))
 	return nil
 }
 
@@ -78,21 +76,18 @@ func importKey(keyName string, fileName string) error {
 // returns newly generated key file to user
 func GetKey(w http.ResponseWriter, r *http.Request) {
 	keyName := "temp" // user input from API or self-generated non-clashing name
-	fmt.Println("Generating key...")
 	key, err := genKey(keyName)
 	if err != nil {
 		writeJSONError(w, "Error in genKey", err)
 		return
 	}
 
-	fmt.Println("Exporting key...")
 	err = exportKey(keyName)
 	if err != nil {
 		writeJSONError(w, "Error in keyName", err)
 		return
 	}
 
-	fmt.Println("Deleting key...")
 	err = deleteKey(key.Name) // delete temp key from local node keystore
 	if err != nil {
 		writeJSONError(w, "Error in deleteKey", err)
@@ -105,7 +100,6 @@ func GetKey(w http.ResponseWriter, r *http.Request) {
 	// w.WriteHeader(http.StatusOK)
 	http.ServeFile(w, r, string(keyName)+".key") // serve key to user to download
 
-	fmt.Println("Deleting exported key...")
 	err = diskDelete(keyName + ".key") // delete key from disk
 	if err != nil {
 		panic(err)
@@ -123,7 +117,7 @@ func GetKey(w http.ResponseWriter, r *http.Request) {
 // Returns 200 & key name as confirmation
 func PostKey(w http.ResponseWriter, r *http.Request) {
 	var dir = abs + "/KeyStore"
-	fmt.Println("dir: ", dir)
+
 	FileName, err := saveFile(r, dir, 32<<10) // grab uploaded .key file
 	if err != nil {
 		writeJSONError(w, "Error in saveFile", err)
@@ -131,14 +125,12 @@ func PostKey(w http.ResponseWriter, r *http.Request) {
 	}
 	name := strings.Split(FileName, ".")[0]
 
-	fmt.Println("Importing Key...")
 	err = importKey(name, dir+"/"+FileName) //import key to local node keystore
 	if err != nil {
 		writeJSONError(w, "Error in importKey", err)
 		return
 	}
 
-	fmt.Println("Deleting saved key from disk...")
 	err = diskDelete(dir + "/" + FileName) // delete key from disk
 	if err != nil {
 		writeJSONError(w, "Error in deleteKey", err)
@@ -155,7 +147,6 @@ func DeleteKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("Deleting key...")
 	err := deleteKey(keyName) // delete temp key from local node keystore
 	if err != nil {
 		writeJSONError(w, "Error in deleteKey", err)

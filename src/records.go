@@ -10,14 +10,12 @@ import (
 // This function will accept a ipns key and resolve it
 // returns the ipfs path it resolved.
 func GetRecord(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Getting IPNS Key...")
 	ipnsKey, ok := GetParam(r, "ipnskey") // grab ipnskey from query parameter
 	if ok != true {
 		writeJSONError(w, "Error with getting ipnskey", nil)
 		return
 	}
 
-	fmt.Println("Resolving IPNS Record...")
 	ipfsPath, err := resolve(ipnsKey) // download content and return ipfs path
 	if err != nil {
 		writeJSONError(w, "Error in resolve", err)
@@ -33,7 +31,6 @@ func GetRecord(w http.ResponseWriter, r *http.Request) {
 func PostRecord(w http.ResponseWriter, r *http.Request) {
 	var dir = abs + "/KeyStore"
 
-	fmt.Println("Getting CID...")
 	CID, ok := GetParam(r, "CID") // grab CID from query parameter
 	if ok != true {
 		writeJSONError(w, "Error with getting CID: "+CID, nil)
@@ -47,28 +44,24 @@ func PostRecord(w http.ResponseWriter, r *http.Request) {
 	}
 	name := strings.Split(FileName, ".")[0]
 
-	fmt.Println("Importing Key...")
 	err = importKey(name, dir+"/"+FileName) //import key to local node keystore
 	if err != nil {
 		writeJSONError(w, "Error in importKey", err)
 		return
 	}
 
-	fmt.Println("Publishing to IPNS...")
 	pubResp, err := publishToIPNS(ipfsURI+CID, name) //publish IPNS record to IPFS
 	if err != nil {
 		writeJSONError(w, "Error in publishToIPNS", err)
 		return
 	}
 
-	fmt.Println("Deleting exported key...")
 	err = diskDelete(dir + "/" + FileName) // delete key from disk
 	if err != nil {
 		writeJSONError(w, "Error in diskDelete", err)
 		return
 	}
 
-	fmt.Printf("\nresponse Name: %s\nresponse Value: %s\n", pubResp.Name, pubResp.Value)
 	writeJSONSuccess(w, "Success - PostKey", ipnsURI+pubResp.Name)
 }
 
@@ -78,7 +71,6 @@ func PostRecord(w http.ResponseWriter, r *http.Request) {
 func PutRecord(w http.ResponseWriter, r *http.Request) {
 	var dir = abs + "/KeyStore"
 
-	fmt.Println("Getting IPNS Key...")
 	key, ok := GetParam(r, "ipnskey") // grab key from query parameter
 	if ok != true {
 		writeJSONError(w, "Error with getting key: "+key, nil)
@@ -92,21 +84,18 @@ func PutRecord(w http.ResponseWriter, r *http.Request) {
 	}
 	name := strings.Split(FileName, ".")[0]
 
-	fmt.Println("Importing Key...")
 	err = importKey(name, dir+"/"+FileName) //import key to local node keystore
 	if err != nil {
 		writeJSONError(w, "Error in importKey", err)
 		return
 	}
 
-	fmt.Println("Resolving IPNS Record...")
 	ipfsPath, err := resolve(key) // download content and return ipfs path
 	if err != nil {
 		writeJSONError(w, "Error in resolve", err)
 		return
 	}
 
-	fmt.Println("Deleting saved key from disk...")
 	err = diskDelete(dir + "/" + FileName) // delete key from disk
 	if err != nil {
 		writeJSONError(w, "Error in deleteKey", err)
@@ -118,7 +107,6 @@ func PutRecord(w http.ResponseWriter, r *http.Request) {
 // This function will take a ipnskey and add it to the queue
 // Returns 200 response
 func StartFollowing(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Getting IPNS Key...")
 	key, ok := GetParam(r, "ipnskey") // grab key from query parameter
 	if ok != true {
 		writeJSONError(w, "Error with getting key: "+key, nil)
@@ -131,7 +119,6 @@ func StartFollowing(w http.ResponseWriter, r *http.Request) {
 }
 
 func StopFollowing(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Getting IPNS Key...")
 	key, ok := GetParam(r, "ipnskey") // grab key from query parameter
 	if ok != true {
 		writeJSONError(w, "Error with getting key: "+key, nil)
@@ -158,7 +145,7 @@ func stopFollow(ipnsKey string) error {
 	index := q.Index(func(item interface{}) bool {
 		return item == ipnsKeyInt
 	})
-	fmt.Printf("Key at index: %d", index)
+
 	// if q.Index() returns -1 aka value not found
 	if index < 0 {
 		fmt.Printf("Key %s not in queue", ipnsKey)
