@@ -14,7 +14,6 @@ import (
 	"testing"
 )
 
-// AddFile to ipfs through API /addFile endpoint
 func TestAddFile(t *testing.T) {
 	resp := make(map[string]string)
 
@@ -157,12 +156,12 @@ func TestGetRecord(t *testing.T) {
 	check(err)
 	ipnskey := pubResp.Name
 
+	// send request to API
 	req, err := http.NewRequest("GET", "/getRecord?ipnskey="+ipnskey, nil)
 	check(err)
-
-	// send request to API
 	rr := executeRequest(GetRecord, req)
 
+	// check if OK
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("Error: %v\n Status Code: %v",
 			rr.Body, status)
@@ -170,106 +169,41 @@ func TestGetRecord(t *testing.T) {
 
 	err = json.Unmarshal(rr.Body.Bytes(), &resp)
 	fmt.Println(resp["message"], resp["value"])
+	// use shell to delete key from ipfs node
+	deleteKey("temp")
 }
 
-func TestRecords(t *testing.T) {
-	resp := make(map[string]string)
-	tests := []struct {
-		method     string
-		request    string
-		fx         http.HandlerFunc
-		statusCode int
-		payload    []byte
-		expected   []byte
-	}{
-		{
-			method:     "POST",
-			request:    "/addFile",
-			fx:         http.HandlerFunc(AddFile),
-			statusCode: 200,
-			payload:    []byte("Hello World"),
-		},
+func TestStartFollowing(t *testing.T) {
+	ipnskey := "k51qzi5uqu5diir8lcwn6n9o4k2dhohp0e16ur82vw55abv5xfi91mp00ie0ml"
+
+	// send request to API
+	req, err := http.NewRequest("GET", "/startFollowing?ipnskey="+ipnskey, nil)
+	check(err)
+	rr := executeRequest(StartFollowing, req)
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Error: %v\n Status Code: %v",
+			rr.Body, status)
 	}
-
-	for i, tt := range tests {
-		// create file to send to server
-		pl := tt.payload
-		file, err := os.Create(fmt.Sprintf("%s%d", "/tmp/dat", i))
-		check(err)
-		defer file.Close()
-		_, err = file.Write(pl)
-
-		// create writer
-		body := &bytes.Buffer{}
-		w := multipart.NewWriter(body)
-		fw, err := w.CreateFormFile("file", filepath.Base(file.Name()))
-		check(err)
-		io.Copy(fw, file)
-		w.Close()
-
-		// Create request
-		req, err := http.NewRequest("POST", tt.request, body)
-		check(err)
-		req.Header.Add("Content-Type", w.FormDataContentType())
-
-		// execute request
-		rr := httptest.NewRecorder()
-		handler := tt.fx
-		handler.ServeHTTP(rr, req)
-
-		// check response
-		if rr.Code != tt.statusCode {
-			t.Errorf("Error: %v\n Status Code: %v",
-				rr.Body, rr.Code)
-		}
-		err = json.Unmarshal(rr.Body.Bytes(), &resp)
-		fmt.Println(resp)
-	}
+	fmt.Println(rr.Body.String())
 }
 
-func TestKeyOperations(t *testing.T) {
-	resp := make(map[string]string)
-	tests := []struct {
-		method     string
-		request    string
-		fx         http.HandlerFunc
-		statusCode int
-		expected   []byte
-	}{
-		{
-			method:     "GET",
-			fx:         http.HandlerFunc(GetKey),
-			request:    "/getKey",
-			statusCode: 200,
-		},
-		{
-			method:     "GET",
-			fx:         http.HandlerFunc(GetRecord),
-			request:    "/getRecord?ipnskey=k51qzi5uqu5diuu5c8uiuzhwk05gycgg5hakjle664382artgxwkw93na4lgmt",
-			expected:   []byte("/ipfs/QmUXTtySmd7LD4p6RG6rZW6RuUuPZXTtNMmRQ6DSQo3aMw"),
-			statusCode: 200,
-		},
-		{
-			method:     "POST",
-			fx:         http.HandlerFunc(StartFollowing),
-			request:    "/startFollowing?ipnskey=k51qzi5uqu5diuu5c8uiuzhwk05gycgg5hakjle664382artgxwkw93na4lgmt",
-			statusCode: 200,
-		},
-	}
+func TestStopFollowing(t *testing.T) {
+	ipnskey := "k51qzi5uqu5diir8lcwn6n9o4k2dhohp0e16ur82vw55abv5xfi91mp00ie0ml"
 
-	for _, tt := range tests {
-		req, err := http.NewRequest(tt.method, tt.request, nil)
-		check(err)
-		rr := httptest.NewRecorder()
-		handler := tt.fx
-		handler.ServeHTTP(rr, req)
+	// First we must add a key or else we get "Queue is empty" error
+	req, err := http.NewRequest("GET", "/startFollowing?ipnskey="+ipnskey, nil)
+	check(err)
+	executeRequest(StartFollowing, req)
 
-		if rr.Code != tt.statusCode {
-			t.Errorf("Error: %v\n Status Code: %v",
-				rr.Body, rr.Code)
-		}
-		err = json.Unmarshal(rr.Body.Bytes(), &resp)
+	// send request to API
+	req, err = http.NewRequest("GET", "/stopFollowing?ipnskey="+ipnskey, nil)
+	check(err)
+	rr := executeRequest(StopFollowing, req)
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Error: %v\n Status Code: %v",
+			rr.Body, status)
 	}
+	fmt.Println(rr.Body.String())
 }
 
 func check(e error) {
