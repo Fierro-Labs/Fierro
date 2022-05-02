@@ -63,6 +63,7 @@ func exportKey(keyName string) error {
 // returns nil if sucessfull & stores key in local node.
 func importKey(keyName string, fileName string) error {
 	args := []string{"key", "import", keyName, fileName}
+	fmt.Println(keyName, fileName)
 	cmd := exec.Command("ipfs", args...)
 	_, err := cmd.Output()
 	if err != nil {
@@ -104,13 +105,6 @@ func GetKey(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-
-	// fmt.Println("Deleting exported key a second time...")
-	// err = diskDelete(keyName) // delete key from disk again to force error
-	// if err != nil {
-	// 	writeJSONError(w, "Error in deleteKey", err)
-	// 	return
-	// }
 }
 
 // This function will save a key to node, then delete the uploaded file from disk
