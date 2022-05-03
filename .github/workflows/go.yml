@@ -20,3 +20,10 @@ jobs:
 
     - name: Build
       run: cd ./src/ && go build -v -o .
+
+    - name: Upload to Codecov
+      uses: codecov/codecov-action@v2
+      with:
+        flags: unittests # optional
+        name: codecov-Fierro # optional
+        verbose: true # optional (default = false)
