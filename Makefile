@@ -14,6 +14,8 @@ select:
 test:
 	go test -v ./src/
 	
-upload:
+format_test:
 	go test -race -covermode=atomic -coverprofile=coverage.out ./src/
+
+upload:
 	bash <(curl -s https://codecov.io/bash) -t ${CODECOV_TOKEN}
