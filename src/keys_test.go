@@ -47,10 +47,11 @@ func TestGenKey(t *testing.T) {
 	}
 
 	resp["key"] = rr.Body.Bytes()
-	fmt.Println(resp["key"])
+	fmt.Println("Success - GetKey")
 }
 
 func TestPostKey(t *testing.T) {
+	t.Skip("skipping test. Service needs to be running on localhost.")
 	resp := make(map[string]string)
 
 	// request key from getKey endpoint
@@ -71,6 +72,9 @@ func TestPostKey(t *testing.T) {
 	err = json.Unmarshal(rb, &resp)
 	fmt.Println("Key Name stored in remote node:", resp["value"])
 	response.Body.Close()
+
+	// use shell to delete key from ipfs node
+	deleteKey("temp")
 }
 
 func TestDeleteKey(t *testing.T) {
