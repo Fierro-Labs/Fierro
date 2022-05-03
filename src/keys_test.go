@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -51,7 +52,13 @@ func TestGenKey(t *testing.T) {
 }
 
 func TestPostKey(t *testing.T) {
-	t.Skip("skipping test. Service needs to be running on localhost.")
+	port := "8082"
+	ln, err := net.Listen("tcp", ":"+port)
+	if err == nil {
+		ln.Close()
+		t.Skip("skipping test. Service needs to be running on localhost.")
+	}
+
 	resp := make(map[string]string)
 
 	// request key from getKey endpoint
