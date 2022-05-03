@@ -1,5 +1,5 @@
-KeyStore/
 *.key
-following.sh
-Road-to-Full-Stack/
+KeyStore/
 Uploads/
+Dockerfile
+mounts/
