@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"path"
@@ -63,7 +64,19 @@ func PostRecord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSONSuccess(w, "Success - PostKey", ipnsURI+pubResp.Name)
+	resp := make(map[string]interface{})
+	resp["message"] = "Success - PostRecord"
+	resp["value"] = ipnsURI + pubResp.Name
+	resp["keyname"] = name
+	jsonResp, err := json.Marshal(resp)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResp)
+	// writeJSONSuccess(w, "Success - PostKey", ipnsURI+pubResp.Name)
 }
 
 // This function takes an IPNS Key and file.key and resolves IPNS record
@@ -102,6 +115,8 @@ func PutRecord(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, "Error in deleteKey", err)
 		return
 	}
+
+	// add custom return function to include generated keyname
 	writeJSONSuccess(w, "Success - PutRecord", ipfsPath)
 }
 
