@@ -24,13 +24,13 @@ type ResolvedPath struct {
 func AddFile(w http.ResponseWriter, r *http.Request) {
 	var dir = abs + "/Uploads"
 
-	FileName, err := saveFile(r, dir, MAX_UPLOAD_SIZE) // grab uploaded content & save to disk
+	FilePath, err := saveFile(r, dir, MAX_UPLOAD_SIZE) // grab uploaded content & save to disk
 	if err != nil {
 		writeJSONError(w, "Error in saveContent", err)
 		return
 	}
 
-	ipfsPath, err := addToIPFS(dir+"/"+FileName, "") // add content file to IPFS
+	ipfsPath, err := addToIPFS(FilePath, "") // add content file to IPFS
 	if err != nil {
 		writeJSONError(w, "Error in addToIPFS", err)
 		return

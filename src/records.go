@@ -3,14 +3,14 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"strings"
+	"path"
 	// "errors"
 )
 
 // This function will accept a ipns key and resolve it
 // returns the ipfs path it resolved.
 func GetRecord(w http.ResponseWriter, r *http.Request) {
-	ipnsKey, ok := GetParam(r, "ipnskey") // grab ipnskey from query parameter
+	ipnsKey, ok := HasParam(r, "ipnskey") // grab ipnskey from query parameter
 	if ok != true {
 		writeJSONError(w, "Error with getting ipnskey", nil)
 		return
@@ -31,20 +31,21 @@ func GetRecord(w http.ResponseWriter, r *http.Request) {
 func PostRecord(w http.ResponseWriter, r *http.Request) {
 	var dir = abs + "/KeyStore"
 
-	CID, ok := GetParam(r, "CID") // grab CID from query parameter
+	CID, ok := HasParam(r, "CID") // grab CID from query parameter
 	if ok != true {
 		writeJSONError(w, "Error with getting CID: "+CID, nil)
 		return
 	}
 
-	FileName, err := saveFile(r, dir, 32<<10) // grab uploaded .key file
+	FilePath, err := saveFile(r, dir, 32<<10) // grab uploaded .key file
 	if err != nil {
 		writeJSONError(w, "Error in saveFile", err)
 		return
 	}
-	name := strings.Split(FileName, ".")[0]
 
-	err = importKey(name, dir+"/"+FileName) //import key to local node keystore
+	name := removeExtenstion(path.Base(FilePath))
+
+	err = importKey(name, FilePath) //import key to local node keystore
 	if err != nil {
 		writeJSONError(w, "Error in importKey", err)
 		return
@@ -56,7 +57,7 @@ func PostRecord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = diskDelete(dir + "/" + FileName) // delete key from disk
+	err = diskDelete(FilePath) // delete key from disk
 	if err != nil {
 		writeJSONError(w, "Error in diskDelete", err)
 		return
@@ -71,20 +72,20 @@ func PostRecord(w http.ResponseWriter, r *http.Request) {
 func PutRecord(w http.ResponseWriter, r *http.Request) {
 	var dir = abs + "/KeyStore"
 
-	key, ok := GetParam(r, "ipnskey") // grab key from query parameter
+	key, ok := HasParam(r, "ipnskey") // grab key from query parameter
 	if ok != true {
 		writeJSONError(w, "Error with getting key: "+key, nil)
 		return
 	}
 
-	FileName, err := saveFile(r, dir, 32<<10) // grab uploaded .key file
+	FilePath, err := saveFile(r, dir, 32<<10) // grab uploaded .key file
 	if err != nil {
 		writeJSONError(w, "Error in saveFile", err)
 		return
 	}
-	name := strings.Split(FileName, ".")[0]
+	name := removeExtenstion(path.Base(FilePath))
 
-	err = importKey(name, dir+"/"+FileName) //import key to local node keystore
+	err = importKey(name, FilePath) //import key to local node keystore
 	if err != nil {
 		writeJSONError(w, "Error in importKey", err)
 		return
@@ -96,7 +97,7 @@ func PutRecord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = diskDelete(dir + "/" + FileName) // delete key from disk
+	err = diskDelete(FilePath) // delete key from disk
 	if err != nil {
 		writeJSONError(w, "Error in deleteKey", err)
 		return
@@ -107,7 +108,7 @@ func PutRecord(w http.ResponseWriter, r *http.Request) {
 // This function will take a ipnskey and add it to the queue
 // Returns 200 response
 func StartFollowing(w http.ResponseWriter, r *http.Request) {
-	key, ok := GetParam(r, "ipnskey") // grab key from query parameter
+	key, ok := HasParam(r, "ipnskey") // grab key from query parameter
 	if ok != true {
 		writeJSONError(w, "Error with getting key: "+key, nil)
 		return
@@ -119,7 +120,7 @@ func StartFollowing(w http.ResponseWriter, r *http.Request) {
 }
 
 func StopFollowing(w http.ResponseWriter, r *http.Request) {
-	key, ok := GetParam(r, "ipnskey") // grab key from query parameter
+	key, ok := HasParam(r, "ipnskey") // grab key from query parameter
 	if ok != true {
 		writeJSONError(w, "Error with getting key: "+key, nil)
 		return

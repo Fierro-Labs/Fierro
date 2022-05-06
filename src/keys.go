@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"strings"
+	"path"
 
 	shell "github.com/ipfs/go-ipfs-api"
 )
@@ -63,7 +63,6 @@ func exportKey(keyName string) error {
 // returns nil if sucessfull & stores key in local node.
 func importKey(keyName string, fileName string) error {
 	args := []string{"key", "import", keyName, fileName}
-	fmt.Println(keyName, fileName)
 	cmd := exec.Command("ipfs", args...)
 	_, err := cmd.Output()
 	if err != nil {
@@ -76,14 +75,23 @@ func importKey(keyName string, fileName string) error {
 // This function generates a key, exports it to "<keyName>.key" file in current dir, then delete from local keystore.
 // returns newly generated key file to user
 func GetKey(w http.ResponseWriter, r *http.Request) {
-	keyName := "temp" // user input from API or self-generated non-clashing name
-	key, err := genKey(keyName)
+	keyName, ok := HasParam(r, "keyName")
+	var key *shell.Key
+	var err error
+
+	if ok != true {
+		keyName := addRdmSuffix("temp")
+		key, err = genKey(keyName)
+	} else {
+		key, err = genKey(keyName)
+	}
+
 	if err != nil {
 		writeJSONError(w, "Error in genKey", err)
 		return
 	}
 
-	err = exportKey(keyName)
+	err = exportKey(key.Name)
 	if err != nil {
 		writeJSONError(w, "Error in keyName", err)
 		return
@@ -96,12 +104,12 @@ func GetKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// log.Println("Url Param 'keyName' is: " + string(keyName))
-	w.Header().Set("Content-Disposition", "attachment; filename="+string(keyName))
+	w.Header().Set("Content-Disposition", "attachment; filename="+key.Name+".key")
 	w.Header().Set("Content-Type", "application/octet-stream")
 	// w.WriteHeader(http.StatusOK)
-	http.ServeFile(w, r, string(keyName)+".key") // serve key to user to download
+	http.ServeFile(w, r, key.Name+".key") // serve key to user to download
 
-	err = diskDelete(keyName + ".key") // delete key from disk
+	err = diskDelete(key.Name + ".key") // delete key from disk
 	if err != nil {
 		panic(err)
 	}
@@ -112,20 +120,20 @@ func GetKey(w http.ResponseWriter, r *http.Request) {
 func PostKey(w http.ResponseWriter, r *http.Request) {
 	var dir = abs + "/KeyStore"
 
-	FileName, err := saveFile(r, dir, 32<<10) // grab uploaded .key file
+	FilePath, err := saveFile(r, dir, 32<<10) // grab uploaded .key file
 	if err != nil {
 		writeJSONError(w, "Error in saveFile", err)
 		return
 	}
-	name := strings.Split(FileName, ".")[0]
+	name := removeExtenstion(path.Base(FilePath))
 
-	err = importKey(name, dir+"/"+FileName) //import key to local node keystore
+	err = importKey(name, FilePath) //import key to local node keystore
 	if err != nil {
 		writeJSONError(w, "Error in importKey", err)
 		return
 	}
 
-	err = diskDelete(dir + "/" + FileName) // delete key from disk
+	err = diskDelete(FilePath) // delete key from disk
 	if err != nil {
 		writeJSONError(w, "Error in deleteKey", err)
 		return
@@ -135,7 +143,7 @@ func PostKey(w http.ResponseWriter, r *http.Request) {
 
 // This function will delete a key from the local node keystore
 func DeleteKey(w http.ResponseWriter, r *http.Request) {
-	keyName, ok := GetParam(r, "keyName")
+	keyName, ok := HasParam(r, "keyName")
 	if ok != true {
 		writeJSONError(w, keyName, nil)
 		return

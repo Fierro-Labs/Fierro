@@ -2,7 +2,6 @@ package main
 
 import (
 	"archive/zip"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,8 +14,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	shell "github.com/ipfs/go-ipfs-api"
 )
 
 // This function will set the appropiate headers for when there is an error.
@@ -52,45 +49,47 @@ func writeJSONSuccess(w http.ResponseWriter, msg string, val string) {
 }
 
 // This function grabs the specified parameter value out the URL
-func GetParam(r *http.Request, parameter string) (string, bool) {
+// returns true or false if `parameter` exists
+func HasParam(r *http.Request, parameter string) (string, bool) {
 	params, ok := r.URL.Query()[parameter]
 	// Query()[parameter] will return an array of items,
 	// we only want the single item.
 	if !ok || len(params[0]) < 1 {
-		fmt.Println("Error: Missing " + parameter)
-		return "Missing " + parameter + " parameter", !ok
+		return "Missing " + parameter + " parameter", ok
 	}
 	return params[0], ok
 }
 
 // Grabs file with specified file size and save to specified dir
-// returns name of file
+// returns path to file
 func saveFile(r *http.Request, dir string, size int64) (string, error) {
-	var FileName string
-
-	r.ParseMultipartForm(size) // limit max input length
-	file, header, err := r.FormFile("file")
+	mpfile, header, err := extractFileFromRequest(r, size)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %s ", err)
 		return "", err
 	}
-	defer file.Close()
-	FileName = header.Filename
+	defer mpfile.Close()
 
-	f, err := os.OpenFile(dir+"/"+FileName, os.O_WRONLY|os.O_CREATE, 0666)
+	FileName := header.Filename
+	cleanedFileName := cleanFileName(FileName)
+	ext := filepath.Ext(cleanedFileName)
+	FileName = removeExtenstion(cleanedFileName)
+
+	f, err := os.CreateTemp(dir, FileName+"*"+ext)
 	if err != nil {
 		fmt.Println("Error in OpenFile: ", err)
 		return "", err
 	}
-	io.Copy(f, file)
+	defer f.Close()
+	io.Copy(f, mpfile)
 
-	return FileName, nil
+	return f.Name(), nil
 }
 
 // Takes a folder that is in .zip format and saves it to specified dir
 // returns the location and name of file
 func saveDir(file multipart.File, fileHeader *multipart.FileHeader, dir string, maxUploadSize int64) (string, error) {
-	pattern := fmt.Sprintf("%d", time.Now().UnixNano())
+	pattern := fmt.Sprintf("%x", time.Now().UnixNano())
 	path := strings.Join([]string{dir, "/user", pattern}, "")
 
 	// Create the uploads folder if it doesn't
@@ -114,35 +113,6 @@ func saveDir(file multipart.File, fileHeader *multipart.FileHeader, dir string, 
 	}
 
 	return path, nil
-}
-
-// Generate keys and embed records. Meant to test how keys are needed to be passed.
-func testFunctions(ipfsPath string) {
-	const KeyName = "temp"
-	sh := shell.NewShell(localhost)
-
-	key, err := sh.KeyGen(context.Background(), KeyName) //generate temp key to local node
-	if err != nil {
-		panic(err)
-	}
-
-	// publishToIPNS(ipfsPath, key.Name) // publish ipfsPath to ipfs under temp key
-
-	err = exportKey(KeyName)
-	if err != nil {
-		panic(err)
-	}
-
-	err = deleteKey(key.Name) // delete temp key
-	if err != nil {
-		panic(err)
-	}
-
-	err = importKey(key.Name, key.Name+".key")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("functions individually work.\n\n")
 }
 
 // Unzip directory at source location, iteratively calls unzipFile to unzip sub structures.
@@ -219,7 +189,7 @@ func removeExtenstion(fileName string) string {
 
 // returns the last element of the path.
 func cleanFileName(fileName string) string {
-	return path.Base(fileName)
+	return path.Base(path.Clean(fileName))
 }
 
 // This function will check and restrict the file types submitted
@@ -251,4 +221,13 @@ func checkFileType(file multipart.File, fileHeader *multipart.FileHeader) (strin
 		return "Error returning request pointer to beginning", err
 	}
 	return "Success", nil
+}
+
+func addRdmSuffix(name string) string {
+	return strings.Join([]string{name, fmt.Sprintf("%x", time.Now().UnixNano())}, "")
+}
+
+func extractFileFromRequest(r *http.Request, size int64) (multipart.File, *multipart.FileHeader, error) {
+	r.ParseMultipartForm(size) // limit max input length
+	return r.FormFile("file")
 }
