@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -65,6 +66,7 @@ func TestPostKey(t *testing.T) {
 	rr := requestKey()
 
 	// store key at path and execute request to post key
+	// TODO: fix fileName to be what I get back from requestKey()
 	fileName := "temp.key"
 	response := submitKey(rr, fileName)
 
@@ -81,7 +83,7 @@ func TestPostKey(t *testing.T) {
 	response.Body.Close()
 
 	// use shell to delete key from ipfs node
-	deleteKey("temp")
+	deleteKey(resp["value"])
 }
 
 func TestDeleteKey(t *testing.T) {
@@ -115,6 +117,11 @@ func TestPostRecord(t *testing.T) {
 
 	// request key from getKey endpoint
 	reqkeyResponse := requestKey()
+
+	disp := reqkeyResponse.Header().Get("Content-Disposition")
+	line := strings.Split(disp, "=")
+	filename := line[1]
+	fmt.Println("filename: ", filename)
 
 	//Store bytes in a file
 	keyPath := "/tmp/temp.key"
@@ -150,7 +157,7 @@ func TestPostRecord(t *testing.T) {
 	err = os.Remove(keyPath)
 	check(err)
 	// use shell to delete key from ipfs node
-	deleteKey("temp")
+	deleteKey(resp["keyname"])
 }
 
 func TestGetRecord(t *testing.T) {
@@ -229,6 +236,7 @@ func addTmpFileToIPFS(path string) *httptest.ResponseRecorder {
 	check(err)
 	defer file.Close()
 	_, err = file.Write(pl)
+	file.Seek(0, 0) //reset pointer to start of file
 
 	// create writer to send to API
 	w, body := createWriter(file)
