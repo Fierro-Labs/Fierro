@@ -236,6 +236,7 @@ func addTmpFileToIPFS(path string) *httptest.ResponseRecorder {
 	check(err)
 	defer file.Close()
 	_, err = file.Write(pl)
+	file.Seek(0, 0) //reset pointer to start of file
 
 	// create writer to send to API
 	w, body := createWriter(file)
