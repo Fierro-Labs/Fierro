@@ -75,39 +75,41 @@ func TestDeleteKey(t *testing.T) {
 	fmt.Println(rr.Body)
 }
 
-func TestForceErrors(t *testing.T) {
+func TestForceKeyErrors(t *testing.T) {
 	tests := []struct {
-		method string
-		fx     func() error
+		desc string
+		fx   func() error
 	}{
 		{
-			method: "genKey",
-			fx:     func() error { _, err := genKey(""); return err },
+			desc: "genKey",
+			fx:   func() error { _, err := genKey(""); return err },
 		},
 		{
-			method: "deleteKey",
-			fx:     func() error { return deleteKey("") },
+			desc: "deleteKey",
+			fx:   func() error { return deleteKey("") },
 		},
 		{
-			method: "diskDelete",
-			fx:     func() error { return diskDelete("/tmp/dne8943phqbtnu4ijher") },
+			desc: "diskDelete",
+			fx:   func() error { return diskDelete("/tmp/dne8943phqbtnu4ijher") },
 		},
 		{
-			method: "exportKey",
-			fx:     func() error { return exportKey("") },
+			desc: "exportKey",
+			fx:   func() error { return exportKey("") },
 		},
 		{
-			method: "importKey",
-			fx:     func() error { return importKey("", "") },
+			desc: "importKey",
+			fx:   func() error { return importKey("", "") },
 		},
 	}
 
 	for _, tt := range tests {
-		err := tt.fx()
-		if err == nil {
-			t.Errorf("function %s did not error out.", tt.method)
-		}
-		fmt.Printf("Failed as Expected: %s\n", err)
+		t.Run(tt.desc, func(t *testing.T) {
+			err := tt.fx()
+			if err == nil {
+				t.Errorf("function %s did not error out.", tt.desc)
+			}
+			fmt.Printf("%s failed: %s\n", tt.desc, err)
+		})
 	}
 }
 
