@@ -151,11 +151,6 @@ func publishToIPNS(ipfsPath string, KeyName string) (*PublishResponse, error) {
 		return nil, err
 	}
 
-	if pubResp.Value != ipfsPath {
-		fmt.Printf("\nExpected to receive %s but got %s", ipfsPath, pubResp.Value)
-		return nil, err
-	}
-
 	return pubResp, nil
 }
 

@@ -8,7 +8,7 @@ run:
 	go run ./src/
 
 # ex: make select ARG1=TestAddFile
-select: 
+select_test: 
 	go test -run $(ARG1) ./src/
 
 test:
