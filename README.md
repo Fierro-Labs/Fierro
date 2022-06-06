@@ -83,7 +83,7 @@ Then spin up local ipfs node:
 `ipfs daemon`
 *this command will hold up your terminal*
 
-Then in a separate terminal window change directory into the repo:
+Then in a separate terminal window, change directory into the repo:
 
 `cd Fierro`
 
@@ -93,6 +93,6 @@ Now, you need to pull in the dependencies specified in server.go.
 
 From there you can run the server by:
 
-`go run .`
+`go run ./src/`
 
 Now you can request keys and publish to IPNS!
