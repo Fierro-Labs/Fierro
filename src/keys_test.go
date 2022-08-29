@@ -2,130 +2,18 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
-	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"testing"
 )
-
-func TestGenKey(t *testing.T) {
-	resp := make(map[string][]byte)
-
-	// create and execute request
-	rr := requestKey()
-
-	// check response
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Error: %v\n Status Code: %v",
-			rr.Body, status)
-	}
-
-	resp["key"] = rr.Body.Bytes()
-	fmt.Println("Success - GetKey")
-}
-
-func TestPostKey(t *testing.T) {
-	resp := make(map[string]string)
-
-	// request key from getKey endpoint
-	rr := requestKey()
-
-	// store key at path and execute request to post key
-	fileName := "temp.key"
-	response := submitKey(rr, fileName)
-
-	rb, err := ioutil.ReadAll(response.Body)
-	check(err)
-
-	// check response
-	if status := response.StatusCode; status != http.StatusOK {
-		t.Errorf("Error: %v\n Status Code: %v",
-			string(rb), status)
-	}
-	err = json.Unmarshal(rb, &resp)
-	fmt.Println("Key Name stored in remote node:", resp["value"])
-	response.Body.Close()
-
-	// use shell to delete key from ipfs node
-	deleteKey(resp["value"])
-}
-
-func TestDeleteKey(t *testing.T) {
-	// use shell to generate key in ipfs node
-	key, err := genKey("temp")
-
-	// create new request
-	req, err := http.NewRequest("DELETE", "/deleteKey?keyName="+key.Name, nil)
-	check(err)
-
-	// execute request
-	rr := executeRequest(DeleteKey, req)
-
-	// check response
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Error: %v\n Status Code: %v",
-			rr.Body, status)
-	}
-	fmt.Println(rr.Body)
-}
-
-func TestForceKeyErrors(t *testing.T) {
-	tests := []struct {
-		desc string
-		fx   func() error
-	}{
-		{
-			desc: "genKey",
-			fx:   func() error { _, err := genKey(""); return err },
-		},
-		{
-			desc: "deleteKey",
-			fx:   func() error { return deleteKey("") },
-		},
-		{
-			desc: "diskDelete",
-			fx:   func() error { return diskDelete("/tmp/dne8943phqbtnu4ijher") },
-		},
-		{
-			desc: "exportKey",
-			fx:   func() error { return exportKey("") },
-		},
-		{
-			desc: "importKey",
-			fx:   func() error { return importKey("", "") },
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			err := tt.fx()
-			if err == nil {
-				t.Errorf("function %s did not error out.", tt.desc)
-			}
-			fmt.Printf("%s failed: %s\n", tt.desc, err)
-		})
-	}
-}
 
 func check(e error) {
 	if e != nil {
 		panic(e)
 	}
-}
-
-func requestKey() *httptest.ResponseRecorder {
-	// create request
-	req, err := http.NewRequest("GET", "/getKey", nil)
-	check(err)
-
-	// execute request
-	return executeRequest(GetKey, req)
 }
 
 func submitKey(rr *httptest.ResponseRecorder, fileName string) *http.Response {
