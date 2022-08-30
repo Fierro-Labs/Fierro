@@ -96,3 +96,5 @@ From there you can run the server by:
 `go run .`
 
 Now you can request keys and publish to IPNS!
+
+* If you run zsh, make sure to use `\` to escape the `?` character. Or else you'll get a `zsh: no matches found:` error.
