@@ -50,9 +50,9 @@ func main() {
 	// handles api/website routes.
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", index)
-	router.HandleFunc("/pins", GetRecord).Methods("GET")
-	router.HandleFunc("/follow", StartFollowing).Methods("POST")
-	router.HandleFunc("/following", StopFollowing).Methods("Delete")
+	router.HandleFunc("/pins/{cid}", GetRecord).Methods("GET")
+	router.HandleFunc("/follow/{cid}", StartFollowing).Methods("POST")
+	router.HandleFunc("/follow/{cid}", StopFollowing).Methods("Delete")
 
 	fs := http.FileServer(http.Dir(abs + "/static/"))
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
