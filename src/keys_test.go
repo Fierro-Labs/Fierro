@@ -16,31 +16,6 @@ func check(e error) {
 	}
 }
 
-func submitKey(rr *httptest.ResponseRecorder, fileName string) *http.Response {
-	// create file
-	path := "/tmp/" + fileName
-	file := createTmpFile(rr, path)
-
-	// create writer
-	w, body := createWriter(file)
-
-	// Create request
-	req, err := http.NewRequest("POST", "http://localhost:8082/postKey", bytes.NewReader(body.Bytes()))
-	check(err)
-	req.Header.Add("Content-Type", w.FormDataContentType())
-	client := &http.Client{}
-
-	// execute request
-	response, err := client.Do(req)
-	check(err)
-
-	// delete tmp file
-	err = os.Remove(path)
-	check(err)
-
-	return response
-}
-
 func createWriter(file *os.File) (*multipart.Writer, *bytes.Buffer) {
 	body := &bytes.Buffer{}
 	w := multipart.NewWriter(body)
