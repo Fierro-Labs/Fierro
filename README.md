@@ -85,7 +85,7 @@ Then spin up local ipfs node:
 
 Then in a separate terminal window change directory into the repo:
 
-`cd Fierro`
+`cd Fierro/src`
 
 Now, you need to pull in the dependencies specified in server.go.
 

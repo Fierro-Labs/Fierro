@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 // This function will set the appropiate headers for when there is an error.
@@ -41,11 +43,10 @@ func writeJSONSuccess(w http.ResponseWriter, msg string, val string) {
 // This function grabs the specified parameter value out the URL
 // returns true or false if `parameter` exists
 func HasParam(r *http.Request, parameter string) (string, bool) {
-	params, ok := r.URL.Query()[parameter]
-	// Query()[parameter] will return an array of items,
-	// we only want the single item.
-	if !ok || len(params[0]) < 1 {
-		return "Missing " + parameter + " parameter", ok
+	vars := mux.Vars(r)
+	category := vars[parameter]
+	if category == "" {
+		return "Missing " + parameter + " parameter", false
 	}
-	return params[0], ok
+	return category, true
 }

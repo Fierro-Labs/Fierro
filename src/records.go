@@ -9,7 +9,7 @@ import (
 // This function will accept a ipns key and resolve it
 // returns the ipfs path it resolved.
 func GetRecord(w http.ResponseWriter, r *http.Request) {
-	ipnsKey, ok := HasParam(r, "ipnskey") // grab ipnskey from query parameter
+	ipnsKey, ok := HasParam(r, "cid") // grab ipnskey from query parameter
 	if ok != true {
 		writeJSONError(w, "Error with getting ipnskey", nil)
 		return
@@ -27,7 +27,7 @@ func GetRecord(w http.ResponseWriter, r *http.Request) {
 // This function will take a ipnskey and add it to the queue
 // Returns 200 response
 func StartFollowing(w http.ResponseWriter, r *http.Request) {
-	key, ok := HasParam(r, "ipnskey") // grab key from query parameter
+	key, ok := HasParam(r, "cid") // grab key from query parameter
 	if ok != true {
 		writeJSONError(w, "Error with getting key: "+key, nil)
 		return
@@ -39,7 +39,7 @@ func StartFollowing(w http.ResponseWriter, r *http.Request) {
 }
 
 func StopFollowing(w http.ResponseWriter, r *http.Request) {
-	key, ok := HasParam(r, "ipnskey") // grab key from query parameter
+	key, ok := HasParam(r, "cid") // grab key from query parameter
 	if ok != true {
 		writeJSONError(w, "Error with getting key: "+key, nil)
 		return
