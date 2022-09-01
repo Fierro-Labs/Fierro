@@ -39,8 +39,13 @@ func writeJSONSuccess(w http.ResponseWriter, Pin PinStatus) {
 // This function grabs the specified parameter value out the URL
 // returns true or false if `parameter` exists
 func hasParam(r *http.Request, parameter string) (string, bool) {
-	vars := mux.Vars(r)
-	category := vars[parameter]
+	category := mux.Vars(r)[parameter]
+	if parameter == "requestcid" {
+		if len(category) != 62 {
+			return "not a base36 cid", false
+		}
+
+	}
 	if category == "" {
 		return "Missing " + parameter + " parameter", false
 	}

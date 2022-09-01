@@ -24,6 +24,8 @@ const ipnsURI = "/ipns/"
 var abs, _ = filepath.Abs("../")
 var q deque.Deque
 
+var MLTRADRS = []string{"/ip4/10.40.2.219/tcp/4001/p2p/12D3KooWJXVZCQzCB28qyDmSGwPLo3Gk2aN9QWctnQkXSc1KCTw2"}
+
 func index(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to the HomePage!")
 	fmt.Println("Endpoint Hit: HomePage")
@@ -50,7 +52,7 @@ func main() {
 	// handles api/website routes.
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", index)
-	router.HandleFunc("/pins/{requestcid}", GetRecord).Methods("GET")
+	// router.HandleFunc("/pins/{requestcid}", GetRecord).Methods("GET")
 	router.HandleFunc("/follow/{requestcid}", StartFollowing).Methods("POST")
 	router.HandleFunc("/follow/{requestcid}", StopFollowing).Methods("Delete")
 

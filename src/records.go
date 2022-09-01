@@ -3,54 +3,66 @@ package main
 import (
 	"fmt"
 	"net/http"
-	// "errors"
+	"time"
+
+	guuid "github.com/google/uuid"
 )
 
 // This function will accept a ipns key and resolve it
 // returns the ipfs path it resolved.
-func GetRecord(w http.ResponseWriter, r *http.Request) {
-	ipnsKey, ok := hasParam(r, "requestcid") // grab ipnskey from query parameter
-	if ok != true {
-		writeJSONError(w, "Error with getting ipnskey", nil)
-		return
-	}
-
-	ipfsPath, err := resolve(ipnsKey) // download content and return ipfs path
-	if err != nil {
-		writeJSONError(w, "Error in resolve", err)
-		return
-	}
-
-	writeJSONSuccess(w, "Success - GetRecord", ipfsPath)
-}
+// func GetRecord(w http.ResponseWriter, r *http.Request) {
+// 	ipnsKey, ok := hasParam(r, "requestcid") // grab ipnskey from query parameter
+// 	if ok != true {
+// 		writeJSONError(w, PinStatus{})
+// 		return
+// 	}
+//
+// ipfsPath, err := resolve(ipnsKey) // download content and return ipfs path
+// if err != nil {
+// 	writeJSONError(w, PinStatus{})
+// 	return
+// }
+//
+// 	writeJSONSuccess(w, PinStatus{})
+// }
 
 // This function will take a ipnskey and add it to the queue
 // Returns 200 response
 func StartFollowing(w http.ResponseWriter, r *http.Request) {
+	var pin *Pin
+	var status Status
+
 	key, ok := hasParam(r, "requestcid") // grab key from query parameter
 	if ok != true {
-		writeJSONError(w, "Error with getting key: "+key, nil)
+		writeJSONError(w, PinStatus{})
 		return
 	}
-	fmt.Print("working?")
+
+	requestid := guuid.NewString()
+
+	pin = new(Pin)
+	pin.Cid = key
+
+	status = QUEUED
+
 	q.PushBack(key)
 
-	writeJSONSuccess(w, "Success - Started following", key)
+	writeJSONSuccess(w, PinStatus{Requestid: requestid, Pin: pin, Created: time.Now(), Status: &status, Delegates: &MLTRADRS})
 }
 
 func StopFollowing(w http.ResponseWriter, r *http.Request) {
 	key, ok := hasParam(r, "requestcid") // grab key from query parameter
 	if ok != true {
-		writeJSONError(w, "Error with getting key: "+key, nil)
+		writeJSONError(w, PinStatus{})
 		return
 	}
 
 	err := stopFollow(key)
 	if err != nil {
-		writeJSONError(w, "Error in StopFollow", err)
+		writeJSONError(w, PinStatus{})
 		return
 	}
-	writeJSONSuccess(w, "Success - Stopped Following", key)
+	writeJSONSuccess(w, PinStatus{})
 }
 
 // This function will delete a key from the queue

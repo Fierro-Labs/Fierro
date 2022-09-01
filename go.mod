@@ -6,6 +6,7 @@ require (
 	github.com/btcsuite/btcd v0.22.0-beta // indirect
 	github.com/gammazero/deque v0.1.1
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/mux v1.7.3
 	github.com/ipfs/go-cid v0.1.0 // indirect
 	github.com/ipfs/go-ipfs-api v0.3.0
