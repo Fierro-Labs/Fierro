@@ -4,6 +4,14 @@ import (
 	"time"
 )
 
+// Response used for listing pin objects matching request
+type PinResults struct {
+	// The total number of pin objects that exist for passed query filters
+	Count int32 `json:"count"`
+	// An array of PinStatus results
+	Results []PinStatus `json:"results"`
+}
+
 // Pin object with status
 type PinStatus struct {
 	// Globally unique identifier of the pin request; can be used to check the status of ongoing pinning, or pin removal

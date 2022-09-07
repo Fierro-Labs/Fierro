@@ -25,6 +25,7 @@ var abs, _ = filepath.Abs("../")
 var q deque.Deque
 
 var MLTRADRS = []string{"/ip4/10.40.2.219/tcp/4001/p2p/12D3KooWJXVZCQzCB28qyDmSGwPLo3Gk2aN9QWctnQkXSc1KCTw2"}
+var users = make(map[string]PinResults)
 
 func index(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to the HomePage!")
@@ -32,6 +33,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	users["testauth"] = PinResults{Count: 0}
 	// Init a cron job that runs every x minutes
 	c := cron.New()
 	c.AddFunc("@every 3m", func() {
@@ -52,9 +54,9 @@ func main() {
 	// handles api/website routes.
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", index)
-	// router.HandleFunc("/pins/{requestcid}", GetRecord).Methods("GET")
-	router.HandleFunc("/follow/{requestcid}", StartFollowing).Methods("POST")
-	router.HandleFunc("/follow/{requestcid}", StopFollowing).Methods("Delete")
+	router.HandleFunc("/pins/", GetRecord).Methods("GET")
+	router.HandleFunc("/follow/", StartFollowing).Methods("POST")
+	router.HandleFunc("/follow/{requestid}", StopFollowing).Methods("Delete")
 
 	fs := http.FileServer(http.Dir(abs + "/static/"))
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))

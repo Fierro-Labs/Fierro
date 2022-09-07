@@ -85,7 +85,7 @@ Then spin up local ipfs node:
 
 Then in a separate terminal window change directory into the repo:
 
-`cd Fierro/src`
+`cd Fierro`
 
 Now, you need to pull in the dependencies specified in server.go.
 
@@ -93,6 +93,8 @@ Now, you need to pull in the dependencies specified in server.go.
 
 From there you can run the server by:
 
+`cd src/`
+
 `go run .`
 
-Now you can request keys and publish to IPNS!
+Now you can request keys and publish to IPNS! Checkout _Tests/requests.sh_ to see example _curl_ commands

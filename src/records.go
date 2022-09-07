@@ -8,66 +8,104 @@ import (
 	guuid "github.com/google/uuid"
 )
 
-// This function will accept a ipns key and resolve it
-// returns the ipfs path it resolved.
-// func GetRecord(w http.ResponseWriter, r *http.Request) {
-// 	ipnsKey, ok := hasParam(r, "requestcid") // grab ipnskey from query parameter
-// 	if ok != true {
-// 		writeJSONError(w, PinStatus{})
-// 		return
-// 	}
-//
-// ipfsPath, err := resolve(ipnsKey) // download content and return ipfs path
-// if err != nil {
-// 	writeJSONError(w, PinStatus{})
-// 	return
-// }
-//
-// 	writeJSONSuccess(w, PinStatus{})
-// }
-
-// This function will take a ipnskey and add it to the queue
-// Returns 200 response
-func StartFollowing(w http.ResponseWriter, r *http.Request) {
-	var pin *Pin
-	var status Status
-
-	key, ok := hasParam(r, "requestcid") // grab key from query parameter
-	if ok != true {
-		writeJSONError(w, PinStatus{})
+// This function will accept a object ID & search DB for it
+// returns the PinStatus object found.
+func GetRecord(w http.ResponseWriter, r *http.Request) {
+	reqToken := getAuthToken(r)
+	exists := checkToken(reqToken)
+	if exists == false {
+		fmt.Println("Not authorized")
+		writeJSONError(w)
 		return
 	}
 
-	requestid := guuid.NewString()
+	status := getPins(reqToken)
+	if len(status) == 0 {
+		fmt.Println("User has no pins.")
+		writeJSONError(w)
+		return
+	}
 
-	pin = new(Pin)
-	pin.Cid = key
-
-	status = QUEUED
-
-	q.PushBack(key)
-
-	writeJSONSuccess(w, PinStatus{Requestid: requestid, Pin: pin, Created: time.Now(), Status: &status, Delegates: &MLTRADRS})
+	writeJSONSuccessResults(w, status)
 }
 
+// This function will take a ipns-name and add it to the queue
+// Returns 202 response
+// Might need to think about adding pinstatus objects into queue instead of just names
+func StartFollowing(w http.ResponseWriter, r *http.Request) {
+	reqToken := getAuthToken(r)
+	exists := checkToken(reqToken)
+	if exists == false {
+		fmt.Println("Not authorized")
+		writeJSONError(w)
+		return
+	}
+	var status Status = QUEUED
+
+	// create Pin object from request
+	pin, ok := getPin(r)
+	if ok != nil {
+		fmt.Println("problem with request")
+		writeJSONError(w)
+		return
+	}
+	// Create uuid
+	requestid := guuid.NewString()
+
+	// Create pinstatus object to store & return in response
+	pinstatus := PinStatus{Requestid: requestid, Pin: &pin, Created: time.Now(), Status: &status, Delegates: &MLTRADRS}
+
+	// Update users' saved pins
+	pinRes := users[reqToken]
+	pinRes.Count++
+	pinRes.Results = append(pinRes.Results, pinstatus)
+	users[reqToken] = pinRes
+
+	// Add name to queue
+	q.PushBack(pin.Cid)
+	// Return result
+	writeJSONSuccessStatus(w, pinstatus)
+}
+
+// This function will take an ipns name and delete from queue
+// Continue here
 func StopFollowing(w http.ResponseWriter, r *http.Request) {
-	key, ok := hasParam(r, "requestcid") // grab key from query parameter
-	if ok != true {
-		writeJSONError(w, PinStatus{})
+	reqToken := getAuthToken(r)
+	exists := checkToken(reqToken)
+	if exists == false {
+		fmt.Println("Not authorized")
+		writeJSONError(w)
 		return
 	}
 
-	err := stopFollow(key)
-	if err != nil {
-		writeJSONError(w, PinStatus{})
+	// grab key from query parameter
+	rid, ok := hasParam(r, "requestid")
+	if !ok {
+		writeJSONError(w)
 		return
 	}
-	writeJSONSuccess(w, PinStatus{})
+
+	// Find user by their authToken and check if they have a pin with that requestID
+	idx := searchUser(reqToken, rid)
+	if idx < 0 {
+		fmt.Println("request id not found")
+		writeJSONError(w)
+	}
+
+	// Pass string requestID to remove from queue
+	err := removeFromQueue(users[reqToken].Results[idx].Pin.Cid)
+	if err != nil {
+		writeJSONError(w)
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
+	w.Header().Set("Content-Type", "application/json")
 }
 
 // This function will delete a key from the queue
 // return success or error
-func stopFollow(ipnsKey string) error {
+func removeFromQueue(ipnsKey string) error {
 	if q.Len() < 1 {
 		fmt.Printf("Queue is empty")
 		return fmt.Errorf("Queue is empty")
