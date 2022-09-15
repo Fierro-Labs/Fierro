@@ -16,6 +16,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/ipfs/go-cid v0.1.0 // indirect
+	github.com/lib/pq v1.10.7 // indirect
 	github.com/libp2p/go-libp2p-core v0.12.0 // indirect
 	github.com/multiformats/go-base32 v0.0.4 // indirect
 	github.com/multiformats/go-multiaddr v0.4.1 // indirect

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,15 +12,23 @@ import (
 
 	"github.com/gammazero/deque"
 	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
 	"github.com/robfig/cron"
 )
+
+/* TODO: I need to posibly implement a new endpoint within Kubo to support the following endpoint?
+// Current progress is to just add support within the Add fx
+// With this I should be able to use  --follow and construct a request to my server
+
+// Another problem is the fact that if I don't want to reuse the command format, then I need to think about how to change lines 155-164 in remotepin.go
+// to add in a string to the object through Fiero/go-pinning and send it.
+
+// Make sure remotepin.go uses the correct endpoint in Add
+*/
 
 const FILE = "Hello"
 const MAX_UPLOAD_SIZE = 3072 * 1024 //3kib * 1 kib = 3MiB
 const localhost = "localhost:5001"
-
-const ipfsURI = "/ipfs/"
-const ipnsURI = "/ipns/"
 
 var abs, _ = filepath.Abs("../")
 var q deque.Deque
@@ -34,6 +43,14 @@ func index(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	users["testauth"] = PinResults{Count: 0}
+
+	connStr := "postgresql://<username>:<password>@<database_ip>/todos?sslmode=disable"
+	// Connect to database
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Init a cron job that runs every x minutes
 	c := cron.New()
 	c.AddFunc("@every 3m", func() {
@@ -55,8 +72,8 @@ func main() {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", index)
 	router.HandleFunc("/pins/", GetRecord).Methods("GET")
-	router.HandleFunc("/follow/", StartFollowing).Methods("POST")
-	router.HandleFunc("/follow/{requestid}", StopFollowing).Methods("Delete")
+	router.HandleFunc("/pins/", StartFollowing).Methods("POST")
+	router.HandleFunc("/pins/{requestid}", StopFollowing).Methods("Delete")
 
 	fs := http.FileServer(http.Dir(abs + "/static/"))
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))

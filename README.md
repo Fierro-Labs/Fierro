@@ -25,6 +25,8 @@
   </p>
 </p>
 
+# !The original version of Fierro has been moved `oldmain` branch. This branch is the cut down version that only consists of record tracking.
+
 # About 
 
 This project is meant to bring dynamic, decentralized data to any project. It started in the Web3 Jam 2021 hackathon, out of the founders need for customizeable decentralized content. While searching for resources, there were more creators asking the same question. "What is the best way to have elements in a NFT's metadata change based on certain events using IPFS?". This api is meant for devs looking to create dapps or services that give their users customizeable content on the InterPlanetary File System (IPFS)
@@ -47,28 +49,13 @@ As previously mentioned, IPNS records need to be republished after a certain per
 
 # API 
 
-There are ten endpoints currently:
+There are 3 endpoints currently:
 
-getKey() - This will generate and return a private/public key pair in .key format. *The private keys are used to create, update, and republish IPNS records.*
-
-postKey(<key_name>.key) - This will import the private key to node.
-
-deleteKey(<keyName> string) - This will delete private key from node.
-
-getRecord(<IPNS_key> string) - This will resolve what IPNS record points to and return IPFS Path. *Does not do continuous resolution aka IPNS Following*
-
-postRecord(<IPFS_CID> string, <key_name>.key) - This will publish a brand new IPNS record and return IPNS path. Saves private key to allow for republishing.
-
-putRecord(<IPNS_key> string, <key_name>.key) - This will resolve IPNS record and returns IPFS path. Saves private key to allow for republishing.
+getRecord(<api_key>) - This will resolve what IPNS record points to and return IPFS Path. *Does not do continuous resolution aka IPNS Following*
 
 startFollowing(<IPNS_key> string) - This will add IPNS record to queue to allow for continuous resolution aka IPNS Following. Returns status 200 & IPNS_key. *Will not resolve record immediately use GetRecord() to resolve upon request.*
 
 stopFollowing(<IPNS_key> string) - This will remove a key from the queue. Returns status 200 & IPNS_key.
-
-add(file) - This will add content to IPFS. Will return CID.
-
-add(dir) - This will add directory to IPFS. Will return CID.
-
 
 
 # To Run

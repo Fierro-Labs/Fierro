@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"os"
 
 	shell "github.com/ipfs/go-ipfs-api"
 )
@@ -30,17 +28,6 @@ func PublishToIPFS(contentHash string, key string) (*PublishResponse, error) {
 	}
 
 	return &pubResp, nil
-}
-
-// This function is needed to let the world know your Record exists.
-func publishToIPNS(ipfsPath string, KeyName string) (*PublishResponse, error) {
-	pubResp, err := PublishToIPFS(ipfsPath, KeyName)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error in Publish: %s ", err)
-		return nil, err
-	}
-
-	return pubResp, nil
 }
 
 // This function will resolve/download the content pointed to by the record.

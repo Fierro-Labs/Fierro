@@ -13,7 +13,7 @@ import (
 func GetRecord(w http.ResponseWriter, r *http.Request) {
 	reqToken := getAuthToken(r)
 	exists := checkToken(reqToken)
-	if exists == false {
+	if !exists {
 		fmt.Println("Not authorized")
 		writeJSONError(w)
 		return
@@ -35,7 +35,7 @@ func GetRecord(w http.ResponseWriter, r *http.Request) {
 func StartFollowing(w http.ResponseWriter, r *http.Request) {
 	reqToken := getAuthToken(r)
 	exists := checkToken(reqToken)
-	if exists == false {
+	if !exists {
 		fmt.Println("Not authorized")
 		writeJSONError(w)
 		return
@@ -72,7 +72,7 @@ func StartFollowing(w http.ResponseWriter, r *http.Request) {
 func StopFollowing(w http.ResponseWriter, r *http.Request) {
 	reqToken := getAuthToken(r)
 	exists := checkToken(reqToken)
-	if exists == false {
+	if !exists {
 		fmt.Println("Not authorized")
 		writeJSONError(w)
 		return
@@ -108,7 +108,7 @@ func StopFollowing(w http.ResponseWriter, r *http.Request) {
 func removeFromQueue(ipnsKey string) error {
 	if q.Len() < 1 {
 		fmt.Printf("Queue is empty")
-		return fmt.Errorf("Queue is empty")
+		return fmt.Errorf("queue is empty")
 	}
 
 	var ipnsKeyInt interface{} = ipnsKey
@@ -119,7 +119,7 @@ func removeFromQueue(ipnsKey string) error {
 	// if q.Index() returns -1 aka value not found
 	if index < 0 {
 		fmt.Printf("Key %s not in queue", ipnsKey)
-		return fmt.Errorf("Key %s not in queue", ipnsKey)
+		return fmt.Errorf("key %s not in queue", ipnsKey)
 	}
 	q.Remove(index)
 	return nil
