@@ -1,10 +1,21 @@
-package main
+package models
 
 import (
 	"time"
 )
 
-// Response used for listing pin objects matching request
+// Status: Status a pin object can have at a pinning service
+type Status string
+
+// List of Status
+const (
+	QUEUED  Status = "queued"
+	PINNING Status = "pinning"
+	PINNED  Status = "pinned"
+	FAILED  Status = "failed"
+)
+
+// PinResults used for listing pin objects matching request
 type PinResults struct {
 	// The total number of pin objects that exist for passed query filters
 	Count int32 `json:"count"`
@@ -18,6 +29,7 @@ type PinStatus struct {
 	Requestid string `json:"requestid"`
 
 	Status *Status `json:"status"`
+
 	// Immutable timestamp indicating when a pin request entered a pinning service; can be used for filtering results and pagination
 	Created time.Time `json:"created"`
 
@@ -39,14 +51,3 @@ type Pin struct {
 
 	Meta *map[string]string `json:"meta,omitempty"`
 }
-
-// Status : Status a pin object can have at a pinning service
-type Status string
-
-// List of Status
-const (
-	QUEUED  Status = "queued"
-	PINNING Status = "pinning"
-	PINNED  Status = "pinned"
-	FAILED  Status = "failed"
-)
